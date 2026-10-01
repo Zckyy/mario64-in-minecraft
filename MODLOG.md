@@ -49,3 +49,8 @@ blocks, rendered with Mario's real model and textures from the user's ROM. Plus 
   ground pound 0x008008A9 -> land 0x0080023C.
 - flat show: triple jump 0x01000882 (+6 blocks), stairs ramp, stomp pig 10->5 HP + bounce, dive 0x0188088A, water plunge
   0x300022E2, swimming 0x300024D0/D1/E1, swim mesh 788 tris.
+- tech (runTech): reactive inputs. Z while running -> crouch slide 0x04808459, fresh A -> long jump 0x03000888, z 7.0 -> 21.5
+  (14.49 blocks), land 0x00000479. Running jump into a stone wall at z=30 -> AIR_HIT_WALL 0x000008A7 at z=29.50
+  (radius 50), fresh A next frame -> WALL_KICK_AIR 0x03000886, flies back to z=24.8. RESULT long_jump=PASS wall_kick=PASS.
+10. Wall kick needs a *fresh* A press (INPUT_A_PRESSED is an edge) within actionTimer <= 2 of ACT_AIR_HIT_WALL, and only
+    happens if forwardVel > 16 when hitting the wall. Scripted tests must react to the action state, not fixed ticks.

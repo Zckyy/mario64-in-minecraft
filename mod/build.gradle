@@ -59,3 +59,17 @@ loom {
         }
     }
 }
+
+loom {
+    runs {
+        tech {
+            inherit client
+            name 'Mario Tech (long jump + wall kick)'
+            vmArg '-Dmario64.autotest=tech'
+            vmArg '-Dmario64.world=MarioTech'
+            vmArg '-Dmario64.preset=flat'
+            vmArg '-Dmario64.setup=tp @s 0.5 -60 0.5 0 0;fill -4 -60 30 4 -51 30 stone'
+            programArgs '--width', '1280', '--height', '720'
+        }
+    }
+}

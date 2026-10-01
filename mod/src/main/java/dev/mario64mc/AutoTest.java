@@ -82,7 +82,10 @@ public final class AutoTest {
             log(mc, "origin " + m.ox + "," + m.oy + "," + m.oz);
             for (String line : m.dumpNear(150)) log(mc, "  surf " + line);
         }
-        if (t == ("show".equals(SCENARIO) ? 520 : 470)) {
+        if ("tech".equals(SCENARIO)) techCheck(mc, m);
+        if (t == ("show".equals(SCENARIO) ? 520 : "tech".equals(SCENARIO) ? 360 : 470)) {
+            if ("tech".equals(SCENARIO)) log(mc, String.format("RESULT long_jump=%s distance=%.2f blocks wall_kick=%s",
+                    longJumpLanded ? "PASS" : "FAIL", longJumpEndZ - longJumpStartZ, wallKicked ? "PASS" : "FAIL"));
             log(mc, "DONE");
             mc.scheduleStop();
         }
@@ -92,6 +95,17 @@ public final class AutoTest {
     static void fillInputs(float[] o) {
         java.util.Arrays.fill(o, 0);
         if (t < 0) return;
+        if ("tech".equals(SCENARIO)) {
+            MarioController m = MarioController.INSTANCE;
+            double z = m.renderZNow();
+            if (t >= 40 && !wallKicked) o[1] = -1;                          // run toward +z (the wall)
+            if (!longJumped && t >= 70 && t < 82) o[4] = 1;                 // Z while running -> crouch slide
+            if (m.action == ACT_CROUCH_SLIDE && !longJumped) o[2] = 1;      // fresh A during crouch slide -> long jump
+            if (longJumpLanded && !wallKicked && z > 25.5 && (m.action & MarioController.ACT_FLAG_AIR) == 0
+                    && jumpPressTicks < 3) { o[2] = 1; jumpPressTicks++; }   // running jump at the wall
+            if (m.action == ACT_AIR_HIT_WALL) o[2] = 1;                     // fresh A in the 2-frame window -> wall kick
+            return;
+        }
         if ("show".equals(SCENARIO)) {
             MarioController m = MarioController.INSTANCE;
             boolean landing = m.action == 0x04000470 || m.action == 0x04000472; // ACT_JUMP_LAND, ACT_DOUBLE_JUMP_LAND
@@ -118,6 +132,27 @@ public final class AutoTest {
         if (in(338, 342)) o[2] = 1;                 // ...then A: long jump
         if (t >= 380 && t < 420) o[0] = 1;          // turn right and run
         if (in(400, 403)) o[3] = 1;                 // dive / kick
+    }
+
+    // decomp/include/sm64.h
+    static final int ACT_CROUCH_SLIDE = 0x04808459, ACT_LONG_JUMP = 0x03000888, ACT_LONG_JUMP_LAND = 0x00000479,
+            ACT_LONG_JUMP_LAND_STOP = 0x0800023B, ACT_AIR_HIT_WALL = 0x000008A7, ACT_WALL_KICK_AIR = 0x03000886;
+    private static boolean longJumped, longJumpLanded, wallKicked;
+    private static int jumpPressTicks, lastAction, shotAt = -1;
+    private static double longJumpStartZ, longJumpEndZ;
+
+    private static void techCheck(MinecraftClient mc, MarioController m) {
+        if (m.action != lastAction) {
+            log(mc, String.format("action 0x%08X -> 0x%08X at t=%d z=%.2f y=%.2f", lastAction, m.action, t, m.renderZNow(), m.renderYNow()));
+            if (m.action == ACT_LONG_JUMP && !longJumped) { longJumped = true; longJumpStartZ = m.renderZNow(); shotAt = t + 8; }
+            if (longJumped && !longJumpLanded && (m.action == ACT_LONG_JUMP_LAND || m.action == ACT_LONG_JUMP_LAND_STOP
+                    || (lastAction == ACT_LONG_JUMP && (m.action & MarioController.ACT_FLAG_AIR) == 0))) {
+                longJumpLanded = true; longJumpEndZ = m.renderZNow();
+            }
+            if (m.action == ACT_WALL_KICK_AIR && !wallKicked) { wallKicked = true; shotAt = t + 5; }
+            lastAction = m.action;
+        }
+        if (t == shotAt) shot(mc, "mario_tech_" + (wallKicked ? "wallkick" : "longjump"));
     }
 
     private static boolean in(int a, int b) { return t >= a && t < b; }
