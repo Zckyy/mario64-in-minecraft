@@ -44,6 +44,7 @@ public final class AutoTest {
             }
         }
         if (mc.player == null || mc.world == null) return;
+        if ("controls".equals(SCENARIO)) controlsUi(mc);
         inWorldTicks++;
         if (inWorldTicks == 60) {
             mc.player.networkHandler.sendChatCommand("time set noon");
@@ -82,6 +83,7 @@ public final class AutoTest {
             log(mc, "origin " + m.ox + "," + m.oy + "," + m.oz);
             for (String line : m.dumpNear(150)) log(mc, "  surf " + line);
         }
+        if ("controls".equals(SCENARIO)) { controlsCheck(mc); return; }
         if ("tech".equals(SCENARIO)) techCheck(mc, m);
         if ("flips".equals(SCENARIO)) flipsCheck(mc, m);
         if (t == ("show".equals(SCENARIO) ? 520 : "tech".equals(SCENARIO) ? 360 : "flips".equals(SCENARIO) ? 420 : 470)) {
@@ -158,6 +160,51 @@ public final class AutoTest {
             lastAction = m.action;
         }
         if (t == shotAt) shot(mc, "mario_tech_" + (wallKicked ? "wallkick" : "longjump"));
+    }
+
+    // --- "controls": the on-screen card, a rebind, and the Mario 64 section of Options > Controls > Key Binds ---
+    private static void controlsCheck(MinecraftClient mc) {
+        if (t == 2) MarioControls.flashCard();
+        if (t == 20) {
+            log(mc, "card A=" + MarioControls.aName() + " B=" + MarioControls.bName() + " Z=" + MarioControls.zName()
+                    + " vanillaJump=" + mc.options.jumpKey.getBoundKeyLocalizedText().getString());
+            shot(mc, "mario_controls_card_default");
+        }
+        if (t == 30) { // bind Mario's A to K: Mario should now use K, vanilla jump must stay on Space
+            MarioControls.buttonA.setBoundKey(net.minecraft.client.util.InputUtil.fromKeyCode(org.lwjgl.glfw.GLFW.GLFW_KEY_K, 0));
+            net.minecraft.client.option.KeyBinding.updateKeysByCode();
+        }
+        if (t == 45) {
+            log(mc, "card A=" + MarioControls.aName() + " vanillaJump=" + mc.options.jumpKey.getBoundKeyLocalizedText().getString()
+                    + " rebind=" + ("K".equals(MarioControls.aName()) && "Space".equals(mc.options.jumpKey.getBoundKeyLocalizedText().getString()) ? "PASS" : "FAIL"));
+            shot(mc, "mario_controls_card_rebound");
+        }
+        if (t == 60 && uiTick < 0) uiTick = 0;
+    }
+
+    private static int uiTick = -1;
+
+    /** Client-tick driven (menus pause single-player, which stops Mario ticks). */
+    private static void controlsUi(MinecraftClient mc) {
+        if (uiTick < 0) return;
+        uiTick++;
+        if (uiTick == 1) mc.setScreen(new net.minecraft.client.gui.screen.option.KeybindsScreen(null, mc.options));
+        if (uiTick == 10 && mc.currentScreen != null) {
+            try {
+                var f = net.minecraft.client.gui.screen.option.KeybindsScreen.class.getDeclaredField("controlsList");
+                f.setAccessible(true);
+                var list = (net.minecraft.client.gui.widget.ScrollableWidget) f.get(mc.currentScreen);
+                list.setScrollY(list.getMaxScrollY());
+            } catch (ReflectiveOperationException e) { log(mc, "scroll failed " + e); }
+        }
+        if (uiTick == 20) shot(mc, "mario_controls_keybinds");
+        if (uiTick == 35) {
+            MarioControls.buttonA.setBoundKey(net.minecraft.client.util.InputUtil.UNKNOWN_KEY);
+            net.minecraft.client.option.KeyBinding.updateKeysByCode();
+            mc.setScreen(null);
+            log(mc, "DONE");
+            mc.scheduleStop();
+        }
     }
 
     // --- "flips": backflip, side flip, slide kick. A tiny state machine driven by Mario's real action state. ---

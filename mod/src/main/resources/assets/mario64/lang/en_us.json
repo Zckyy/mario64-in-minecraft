@@ -1,1 +1,8 @@
-{ "key.mario64.toggle": "Toggle Mario", "category.mario64": "Mario 64" }
+{
+  "category.mario64": "Mario 64",
+  "key.mario64.a": "Button A: Jump / Swim",
+  "key.mario64.b": "Button B: Punch / Kick / Dive",
+  "key.mario64.z": "Button Z: Crouch / Ground Pound",
+  "key.mario64.controls": "Controls Card",
+  "key.mario64.toggle": "Toggle Mario"
+}

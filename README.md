@@ -22,14 +22,34 @@ the decompiled game code from [n64decomp/sm64](https://github.com/n64decomp/sm64
 - Mario's voice and SFX come from SM64's own sound engine (32 kHz, from the ROM).
 
 ## Controls
-| Key | SM64 |
+Everything is rebindable under **Options → Controls → Key Binds → Mario 64**.
+
+| Key Binds entry | Default | SM64 |
+|---|---|---|
+| Toggle Mario | **M** | Become Mario / back to Steve |
+| Button A: Jump / Swim | *Not Bound* → uses your **Jump** key (Space) | A |
+| Button B: Punch / Kick / Dive | *Not Bound* → uses your **Attack** key (left click) | B |
+| Button Z: Crouch / Ground Pound | *Not Bound* → uses your **Sneak** key (Left Shift) | Z |
+| Controls Card | **H** | Pin or hide the on-screen controls card |
+
+Movement uses your normal Forward/Left/Back/Right keys as the analog stick, relative to the camera, and the mouse
+turns the camera. Mario's A/B/Z start unbound on purpose. Minecraft lets one key drive only one binding, so
+defaulting them to Space, left click and Shift would break normal jumping and sneaking when you're not Mario. Bind
+them to a key of their own only if you want Mario on different keys.
+
+When you become Mario, a **controls card** appears for 8 seconds on the right. It lists the buttons and SM64's combos
+using your current key names. Press **H** to keep it on screen.
+
+| Move | How |
 |---|---|
-| **M** | Toggle Mario on/off (rebindable under Controls → Mario 64) |
-| WASD | Analog stick, relative to the camera |
-| Space | A (jump / swim) |
-| Left click | B (punch, kick, dive) |
-| Shift | Z (crouch, ground pound, long jump with A, backflip) |
-| Mouse | Camera (third person) |
+| Triple jump | A three times, each right as you land |
+| Long jump | Run, then Z + A |
+| Backflip | Hold Z standing still, then A |
+| Side flip | Run, reverse direction, then A while skidding |
+| Wall kick | A just as you hit a wall mid-jump |
+| Ground pound | Z in the air |
+| Slide kick | Run, then Z + B |
+| Dive | Run, then B |
 
 ## Install (Windows)
 1. Install Fabric Loader 0.16.10 for 1.21.4 and Fabric API 0.119.4+1.21.4.
@@ -41,7 +61,8 @@ the decompiled game code from [n64decomp/sm64](https://github.com/n64decomp/sm64
 - `sm64.dll`: clone libsm64, then run `python import-mario-geo.py` (it fetches Mario's geo/model sources from n64decomp/sm64), then `make lib CC=gcc` with w64devkit/MSYS2 gcc.
 - Mod: `cd mod && ./gradlew build` (JDK 21) produces `mod/build/libs/mario64mc-0.1.0.jar`.
 - Automated in-game tests: `./gradlew runAutotest` (hills: moves), `runCourse`, `runShow` (flat course), `runTech`
-  (long jump and wall kick) and `runFlips` (backflip, side flip, slide kick). The last two end with a
+  (long jump and wall kick), `runFlips` (backflip, side flip, slide kick) and `runControls` (controls card, rebinding
+  Mario's A to K while vanilla Jump stays on Space, and screenshots of the Key Binds section). The last two end with a
   `RESULT …=PASS|FAIL` line. Each opens a
   lab world, becomes Mario, drives scripted controller input, logs `MARIO64TEST` state lines (SM64 action IDs,
   positions, mob HP) and saves screenshots to `mod/run/screenshots`.

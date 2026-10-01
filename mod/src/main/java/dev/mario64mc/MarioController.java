@@ -162,7 +162,9 @@ public final class MarioController {
         active = true;
         marioPlayer = player.getUuid();
         MarioAudio.setActive(true);
-        if (!AutoTest.enabled()) say(mc, Formatting.GOLD, "It's-a me, Mario!  [WASD] move  [Space] A  [Left click] B  [Shift] Z  [M] exit");
+        if (!AutoTest.enabled()) say(mc, Formatting.GOLD, "It's-a me, Mario!  [" + MarioControls.moveNames() + "] move  [" + MarioControls.aName()
+                + "] A  [" + MarioControls.bName() + "] B  [" + MarioControls.zName() + "] Z  ["
+                + MarioControls.showControls.getBoundKeyLocalizedText().getString() + "] controls");
     }
 
     public void deactivate() {
@@ -304,9 +306,9 @@ public final class MarioController {
         }
         inputs.setFloat(8, strafe);                  // stickX: +1 = right
         inputs.setFloat(12, -fwd);                   // stickY: -1 = forward (N64 convention)
-        inputs.setByte(16, (byte) (o.jumpKey.isPressed() || scripted[2] > 0 ? 1 : 0));   // A
-        inputs.setByte(17, (byte) (o.attackKey.isPressed() || scripted[3] > 0 ? 1 : 0)); // B
-        inputs.setByte(18, (byte) (o.sneakKey.isPressed() || scripted[4] > 0 ? 1 : 0));  // Z
+        inputs.setByte(16, (byte) (MarioControls.a(mc) || scripted[2] > 0 ? 1 : 0));   // A
+        inputs.setByte(17, (byte) (MarioControls.b(mc) || scripted[3] > 0 ? 1 : 0)); // B
+        inputs.setByte(18, (byte) (MarioControls.z(mc) || scripted[4] > 0 ? 1 : 0));  // Z
     }
 
     /** SM64 water level (absolute units) for Mario's column, or very low when there is no water. */

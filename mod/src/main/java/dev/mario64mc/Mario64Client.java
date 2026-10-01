@@ -2,24 +2,18 @@ package dev.mario64mc;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-import org.lwjgl.glfw.GLFW;
 
 public class Mario64Client implements ClientModInitializer {
-    public static KeyBinding toggleKey;
-
     @Override
     public void onInitializeClient() {
-        toggleKey = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.mario64.toggle", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_M, "category.mario64"));
+        MarioControls.register();
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
-            while (toggleKey.wasPressed()) MarioController.INSTANCE.toggle();
+            MarioControls.tick(mc);
             MarioController.INSTANCE.clientTick(mc);
             AutoTest.clientTick(mc);
         });
@@ -27,7 +21,7 @@ public class Mario64Client implements ClientModInitializer {
             if (MarioController.INSTANCE.active) MarioController.INSTANCE.deactivate();
         }));
         WorldRenderEvents.AFTER_ENTITIES.register(MarioRenderer::render);
-        HudRenderCallback.EVENT.register((ctx, tick) -> renderPowerMeter(ctx));
+        HudRenderCallback.EVENT.register((ctx, tick) -> { renderPowerMeter(ctx); MarioControls.renderCard(ctx); });
     }
 
     /** SM64-style power meter: 8 wedges, coloured like the original (blue, green, yellow, red). */

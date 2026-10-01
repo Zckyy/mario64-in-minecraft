@@ -87,3 +87,16 @@ loom {
         }
     }
 }
+
+loom {
+    runs {
+        controls {
+            inherit client
+            name 'Mario Controls UI'
+            vmArg '-Dmario64.autotest=controls'
+            vmArg '-Dmario64.world=MarioFlips'
+            vmArg '-Dmario64.preset=flat'
+            programArgs '--width', '1280', '--height', '720'
+        }
+    }
+}

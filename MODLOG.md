@@ -59,3 +59,10 @@ blocks, rendered with Mario's real model and textures from the user's ROM. Plus 
   (+4.5). Run, Z -> CROUCH_SLIDE, fresh B -> SLIDE_KICK 0x018008AA -> SLIDE_KICK_SLIDE 0x0080045A (lunge ~6 blocks, slide to
   8.5 total). RESULT backflip=PASS side_flip=PASS slide_kick=PASS. Equal heights are correct: both use vel.y 62 in
   set_mario_action_airborne.
+- Controls: MarioControls registers the "Mario 64" Key Binds category (Toggle M, Button A/B/Z, Controls Card H) plus a
+  HUD controls card. runControls: card shows live key names, A rebound to K -> card A=K, vanilla jump still Space
+  (rebind=PASS), Key Binds screen screenshotted scrolled to the Mario 64 section.
+11. Minecraft's KEY_TO_BINDINGS holds one binding per key and the last registered wins, so a mod binding on Space steals
+    vanilla Jump. Mario A/B/Z default to unbound (= the vanilla key) and, once bound, are read raw from GLFW.
+12. Key Binds entries sort by *translated label*, so the labels decide the order ("Button A/B/Z", "Controls Card", "Toggle Mario").
+13. Opening any menu pauses single-player (mc.isPaused), which stops Mario ticks. Drive UI test steps from client ticks.
