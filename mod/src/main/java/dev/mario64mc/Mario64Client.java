@@ -14,6 +14,7 @@ public class Mario64Client implements ClientModInitializer {
         MarioControls.register();
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             MarioControls.tick(mc);
+            MarioGamepad.menuButtons(mc);
             MarioController.INSTANCE.clientTick(mc);
             AutoTest.clientTick(mc);
         });
@@ -21,6 +22,14 @@ public class Mario64Client implements ClientModInitializer {
             if (MarioController.INSTANCE.active) MarioController.INSTANCE.deactivate();
         }));
         WorldRenderEvents.AFTER_ENTITIES.register(MarioRenderer::render);
+        // "Mario 64 Gamepad..." button in Options > Controls
+        net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((mc, screen, w, h) -> {
+            if (screen instanceof net.minecraft.client.gui.screen.option.ControlsOptionsScreen) {
+                net.fabricmc.fabric.api.client.screen.v1.Screens.getButtons(screen).add(
+                        net.minecraft.client.gui.widget.ButtonWidget.builder(net.minecraft.text.Text.translatable("mario64.settings.open"),
+                                b -> mc.setScreen(new MarioSettingsScreen(screen))).dimensions(w - 158, 6, 150, 20).build());
+            }
+        });
         HudRenderCallback.EVENT.register((ctx, tick) -> { renderPowerMeter(ctx); MarioControls.renderCard(ctx); });
     }
 

@@ -100,3 +100,16 @@ loom {
         }
     }
 }
+
+loom {
+    runs {
+        gamepad {
+            inherit client
+            name 'Mario Gamepad'
+            vmArg '-Dmario64.autotest=gamepad'
+            vmArg '-Dmario64.world=MarioFlips'
+            vmArg '-Dmario64.preset=flat'
+            programArgs '--width', '1280', '--height', '720'
+        }
+    }
+}

@@ -51,6 +51,26 @@ using your current key names. Press **H** to keep it on screen.
 | Slide kick | Run, then Z + B |
 | Dive | Run, then B |
 
+### Gamepad (Xbox-style controllers)
+Any controller Windows sees as an Xbox/XInput pad works through GLFW's standard mapping. It was tested with GLFW
+detecting a GameSir G7 SE as "XInput Gamepad (GLFW)". The left stick is truly analog, as on the N64: a half tilt walks
+(SM64 speed about 8) and a full tilt runs (about 32).
+
+| Controller | SM64 |
+|---|---|
+| Left stick | Analog stick |
+| Right stick | Camera |
+| A | A (jump / swim) |
+| X or B | B (punch / kick / dive) |
+| LT, RT or LB | Z (crouch / ground pound) |
+| Menu | Pause |
+| View | Pin / hide the controls card |
+
+Settings live under **Options → Controls → Mario 64 Gamepad…**: gamepad on/off, stick deadzone (default 15 %), right-stick
+camera speed and invert Y. They're saved in `config/mario64/mario64.json`, and the screen shows which controller was
+detected. Keyboard and mouse keep working alongside the pad. *GameSir G7 SE tip:* its two back paddles are remapped in
+the controller itself. Mapping one to **LT** puts Z (long jump, backflip, ground pound) under a finger.
+
 ## Install (Windows)
 1. Install Fabric Loader 0.16.10 for 1.21.4 and Fabric API 0.119.4+1.21.4.
 2. Put `mario64mc-0.1.0.jar` in `mods/`.
@@ -61,8 +81,10 @@ using your current key names. Press **H** to keep it on screen.
 - `sm64.dll`: clone libsm64, then run `python import-mario-geo.py` (it fetches Mario's geo/model sources from n64decomp/sm64), then `make lib CC=gcc` with w64devkit/MSYS2 gcc.
 - Mod: `cd mod && ./gradlew build` (JDK 21) produces `mod/build/libs/mario64mc-0.1.0.jar`.
 - Automated in-game tests: `./gradlew runAutotest` (hills: moves), `runCourse`, `runShow` (flat course), `runTech`
-  (long jump and wall kick), `runFlips` (backflip, side flip, slide kick) and `runControls` (controls card, rebinding
-  Mario's A to K while vanilla Jump stays on Space, and screenshots of the Key Binds section). The last two end with a
+  (long jump and wall kick), `runFlips` (backflip, side flip, slide kick) `runControls` (controls card, rebinding
+  Mario's A to K while vanilla Jump stays on Space, and screenshots of the Key Binds section) and `runGamepad` (real pad
+  detection, deadzone maths, and a virtual Xbox pad checking that a half tilt walks and a full tilt runs, plus the
+  right-stick camera, A/LT/X, and screenshots of the settings screens). The last two end with a
   `RESULT …=PASS|FAIL` line. Each opens a
   lab world, becomes Mario, drives scripted controller input, logs `MARIO64TEST` state lines (SM64 action IDs,
   positions, mob HP) and saves screenshots to `mod/run/screenshots`.

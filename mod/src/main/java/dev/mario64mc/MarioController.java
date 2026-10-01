@@ -74,7 +74,7 @@ public final class MarioController {
     public double renderX, renderY, renderZ;
 
     public int health = 0x880, action, flags;
-    public float faceAngle;
+    public float faceAngle, forwardVel;
 
     private double acc;
     private long lastNanos;
@@ -180,6 +180,7 @@ public final class MarioController {
 
     /** Called once per rendered frame before the camera is set up. */
     public void frame(MinecraftClient mc) {
+        MarioGamepad.poll();
         if (!active) return;
         ClientPlayerEntity player = mc.player;
         if (player == null || mc.world == null) { deactivate(); return; }
@@ -192,6 +193,7 @@ public final class MarioController {
         double dt = Math.min((now - lastNanos) / 1e9, 0.25);
         lastNanos = now;
         if (mc.isPaused() || player.isDead()) dt = 0;
+        gamepadCamera(mc, player, dt);
         acc += dt;
         while (acc >= TICK) {
             acc -= TICK;
@@ -208,6 +210,20 @@ public final class MarioController {
         player.prevZ = player.lastRenderZ = renderZ;
         player.setVelocity(0, 0, 0);
         player.fallDistance = 0;
+    }
+
+    /** Right stick turns the third-person camera (the player's look direction). */
+    private void gamepadCamera(MinecraftClient mc, ClientPlayerEntity player, double dt) {
+        MarioGamepad.State gp = MarioGamepad.current();
+        if (gp == null || mc.currentScreen != null || (gp.camX == 0 && gp.camY == 0)) return;
+        MarioConfig c = MarioConfig.get();
+        float yaw = player.getYaw() + (float) (gp.camX * 180 * c.cameraSpeed * dt);
+        float pitch = net.minecraft.util.math.MathHelper.clamp(
+                player.getPitch() + (float) (gp.camY * 120 * c.cameraSpeed * dt * (c.invertCameraY ? -1 : 1)), -90f, 90f);
+        player.setYaw(yaw);
+        player.setPitch(pitch);
+        player.prevYaw = yaw;
+        player.prevPitch = pitch;
     }
 
     /** Called from the client tick: hurt reactions. */
@@ -270,6 +286,7 @@ public final class MarioController {
         state.read(LibSM64.STATE_POS, curMario, 0, 3);
         state.read(LibSM64.STATE_VEL, vel, 0, 3);
         faceAngle = state.getFloat(LibSM64.STATE_FACE_ANGLE);
+        forwardVel = state.getFloat(LibSM64.STATE_FWD_VEL);
         health = state.getShort(LibSM64.STATE_HEALTH);
         action = state.getInt(LibSM64.STATE_ACTION);
         flags = state.getInt(LibSM64.STATE_FLAGS);
@@ -298,6 +315,11 @@ public final class MarioController {
         float yaw = (float) Math.toRadians(mc.gameRenderer.getCamera().getYaw());
         inputs.setFloat(0, (float) -Math.sin(yaw)); // camLookX
         inputs.setFloat(4, (float) Math.cos(yaw));  // camLookZ
+        MarioGamepad.State gp = mc.currentScreen == null ? MarioGamepad.current() : null;
+        float padX = 0, padY = 0;
+        boolean padA = false, padB = false, padZ = false;
+        if (gp != null) { padX = gp.stickX; padY = gp.stickY; padA = gp.a; padB = gp.b; padZ = gp.z; }
+        if (padX != 0 || padY != 0) { strafe = padX; fwd = -padY; } // true analog magnitude from the left stick
         if (AutoTest.enabled()) {
             AutoTest.fillInputs(scripted);
             if (scripted[0] != 0 || scripted[1] != 0 || scripted[2] + scripted[3] + scripted[4] > 0) {
@@ -306,9 +328,9 @@ public final class MarioController {
         }
         inputs.setFloat(8, strafe);                  // stickX: +1 = right
         inputs.setFloat(12, -fwd);                   // stickY: -1 = forward (N64 convention)
-        inputs.setByte(16, (byte) (MarioControls.a(mc) || scripted[2] > 0 ? 1 : 0));   // A
-        inputs.setByte(17, (byte) (MarioControls.b(mc) || scripted[3] > 0 ? 1 : 0)); // B
-        inputs.setByte(18, (byte) (MarioControls.z(mc) || scripted[4] > 0 ? 1 : 0));  // Z
+        inputs.setByte(16, (byte) (MarioControls.a(mc) || padA || scripted[2] > 0 ? 1 : 0));   // A
+        inputs.setByte(17, (byte) (MarioControls.b(mc) || padB || scripted[3] > 0 ? 1 : 0)); // B
+        inputs.setByte(18, (byte) (MarioControls.z(mc) || padZ || scripted[4] > 0 ? 1 : 0));  // Z
     }
 
     /** SM64 water level (absolute units) for Mario's column, or very low when there is no water. */

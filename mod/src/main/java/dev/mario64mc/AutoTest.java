@@ -45,6 +45,7 @@ public final class AutoTest {
         }
         if (mc.player == null || mc.world == null) return;
         if ("controls".equals(SCENARIO)) controlsUi(mc);
+        if ("gamepad".equals(SCENARIO)) gamepadUi(mc);
         inWorldTicks++;
         if (inWorldTicks == 60) {
             mc.player.networkHandler.sendChatCommand("time set noon");
@@ -84,6 +85,7 @@ public final class AutoTest {
             for (String line : m.dumpNear(150)) log(mc, "  surf " + line);
         }
         if ("controls".equals(SCENARIO)) { controlsCheck(mc); return; }
+        if ("gamepad".equals(SCENARIO)) { gamepadCheck(mc, m); return; }
         if ("tech".equals(SCENARIO)) techCheck(mc, m);
         if ("flips".equals(SCENARIO)) flipsCheck(mc, m);
         if (t == ("show".equals(SCENARIO) ? 520 : "tech".equals(SCENARIO) ? 360 : "flips".equals(SCENARIO) ? 420 : 470)) {
@@ -102,6 +104,7 @@ public final class AutoTest {
         java.util.Arrays.fill(o, 0);
         if (t < 0) return;
         if ("flips".equals(SCENARIO)) { flipsInputs(o); return; }
+        if ("gamepad".equals(SCENARIO) || "controls".equals(SCENARIO)) return; // driven by the (virtual) gamepad / UI
         if ("tech".equals(SCENARIO)) {
             MarioController m = MarioController.INSTANCE;
             double z = m.renderZNow();
@@ -160,6 +163,63 @@ public final class AutoTest {
             lastAction = m.action;
         }
         if (t == shotAt) shot(mc, "mario_tech_" + (wallKicked ? "wallkick" : "longjump"));
+    }
+
+    // --- "gamepad": real-hardware detection, then a virtual Xbox pad drives Mario ---
+    private static final MarioGamepad.State pad = new MarioGamepad.State();
+    private static double halfSpeed, fullSpeed, yawBefore;
+    private static boolean padJump, padPunch, padPound;
+
+    private static void gamepadCheck(MinecraftClient mc, MarioController m) {
+        if (t == 1) {
+            log(mc, "real gamepad: " + MarioGamepad.connectedName());
+            float[] in = MarioGamepad.radial(0.10f, 0, 0.15), edge = MarioGamepad.radial(1f, 0, 0.15), mid = MarioGamepad.radial(0.575f, 0, 0.15);
+            log(mc, String.format("deadzone 0.15: 0.10->%.2f 0.575->%.2f 1.0->%.2f %s", in[0], mid[0], edge[0],
+                    in[0] == 0 && Math.abs(mid[0] - 0.5f) < 0.01 && edge[0] == 1f ? "PASS" : "FAIL"));
+            pad.name = "Virtual Xbox Controller (test)";
+            MarioGamepad.inject(pad);
+            MarioControls.flashCard();
+        }
+        pad.stickX = pad.stickY = pad.camX = pad.camY = 0;
+        pad.a = pad.b = pad.z = false;
+        if (t >= 20 && t < 80) pad.stickY = -0.5f;          // half tilt forward
+        if (t == 79) halfSpeed = m.forwardVel;
+        if (t >= 110 && t < 170) pad.stickY = -1f;         // full tilt forward
+        if (t == 169) fullSpeed = m.forwardVel;
+        if (t == 172) log(mc, String.format("analog: half tilt fwdVel=%.1f full tilt fwdVel=%.1f %s", halfSpeed, fullSpeed,
+                halfSpeed > 1 && halfSpeed < fullSpeed * 0.75 ? "PASS" : "FAIL"));
+        if (t == 200) yawBefore = mc.player.getYaw();
+        if (t >= 200 && t < 230) pad.camX = 1f;             // right stick: turn camera for 1 s
+        if (t == 232) log(mc, String.format("camera: yaw %.1f -> %.1f (%.1f deg) %s", yawBefore, mc.player.getYaw(),
+                mc.player.getYaw() - yawBefore, mc.player.getYaw() - yawBefore > 90 ? "PASS" : "FAIL"));
+        if (t >= 250 && t < 254) pad.a = true;              // A: jump
+        if (t >= 262 && t < 266) pad.z = true;              // LT in the air: ground pound
+        if (t >= 300 && !padPunch && m.action == 0x0C400201 && t % 6 < 3) pad.b = true; // X once idle again: punch
+        if (m.action == 0x03000880) padJump = true;
+        if (m.action == ACT_GROUND_POUND_ID) padPound = true;
+        if (m.action == 0x00800380) padPunch = true;
+        if (t == 60) shot(mc, "mario_gamepad_card");
+        if (t == 350) {
+            log(mc, "buttons: jump=" + (padJump ? "PASS" : "FAIL") + " ground_pound=" + (padPound ? "PASS" : "FAIL")
+                    + " punch=" + (padPunch ? "PASS" : "FAIL"));
+            uiTick = 0;
+        }
+    }
+    static final int ACT_GROUND_POUND_ID = 0x008008A9;
+
+    private static void gamepadUi(MinecraftClient mc) {
+        if (uiTick < 0) return;
+        uiTick++;
+        if (uiTick == 1) mc.setScreen(new net.minecraft.client.gui.screen.option.ControlsOptionsScreen(null, mc.options));
+        if (uiTick == 10) shot(mc, "mario_gamepad_controls_screen");
+        if (uiTick == 20) mc.setScreen(new MarioSettingsScreen(mc.currentScreen));
+        if (uiTick == 30) shot(mc, "mario_gamepad_settings");
+        if (uiTick == 40) {
+            MarioGamepad.inject(null);
+            mc.setScreen(null);
+            log(mc, "DONE");
+            mc.scheduleStop();
+        }
     }
 
     // --- "controls": the on-screen card, a rebind, and the Mario 64 section of Options > Controls > Key Binds ---

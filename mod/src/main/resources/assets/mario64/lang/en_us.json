@@ -4,5 +4,14 @@
   "key.mario64.b": "Button B: Punch / Kick / Dive",
   "key.mario64.z": "Button Z: Crouch / Ground Pound",
   "key.mario64.controls": "Controls Card",
-  "key.mario64.toggle": "Toggle Mario"
+  "key.mario64.toggle": "Toggle Mario",
+  "mario64.settings.open": "Mario 64 Gamepad...",
+  "mario64.settings.title": "Mario 64: Gamepad",
+  "mario64.settings.gamepad": "Gamepad support",
+  "mario64.settings.deadzone": "Stick deadzone: %s",
+  "mario64.settings.camera": "Camera speed (right stick): %s",
+  "mario64.settings.invert": "Invert camera Y",
+  "mario64.settings.detected": "Detected: %s",
+  "mario64.settings.none": "No gamepad detected. Plug in an Xbox-style controller.",
+  "mario64.settings.layout": "Left stick move \u00b7 A jump \u00b7 X/B punch \u00b7 LT/RT/LB Z \u00b7 right stick camera \u00b7 Menu pause"
 }

@@ -66,3 +66,11 @@ blocks, rendered with Mario's real model and textures from the user's ROM. Plus 
     vanilla Jump. Mario A/B/Z default to unbound (= the vanilla key) and, once bound, are read raw from GLFW.
 12. Key Binds entries sort by *translated label*, so the labels decide the order ("Button A/B/Z", "Controls Card", "Toggle Mario").
 13. Opening any menu pauses single-player (mc.isPaused), which stops Mario ticks. Drive UI test steps from client ticks.
+- Gamepad: GLFW standard gamepad (LWJGL 3.3.3 in MC 1.21.4). The user's GameSir G7 SE (USB VID 3537, XInput) is detected as
+  "XInput Gamepad (GLFW)". runGamepad (virtual pad injected): deadzone PASS, analog half tilt fwdVel 7-9 vs full 32 PASS
+  (SM64: intendedMag = (mag/64)^2*64/2, so half stick -> 8), right stick 1 s -> ~180 deg yaw PASS, A jump / LT ground pound
+  / X punch PASS. Settings: Options > Controls > "Mario 64 Gamepad..." (ScreenEvents.AFTER_INIT), saved to mario64.json.
+14. A test scenario without its own fillInputs branch falls through to the default "moves" script and overrides the
+    stick (it made a half tilt look like a run). Every scenario needs an explicit branch.
+15. After a ground-pound landing Mario stays in 0x0C00023E (recovery), which ignores B for about 20 frames. Press buttons
+    reactively on ACT_IDLE.

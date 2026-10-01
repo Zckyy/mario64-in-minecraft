@@ -35,6 +35,8 @@ public final class MarioControls {
         return KeyBindingHelper.registerKeyBinding(new KeyBinding(id, type, code, CATEGORY));
     }
 
+    public static void togglePinnedCard() { cardPinned = !cardPinned; }
+
     public static void flashCard() { cardUntil = System.currentTimeMillis() + 8000; }
 
     /** Client tick: key presses that toggle things. */
@@ -79,13 +81,14 @@ public final class MarioControls {
         MinecraftClient mc = MinecraftClient.getInstance();
         if (!MarioController.INSTANCE.active || mc.options.hudHidden || mc.currentScreen != null) return;
         if (!cardPinned && System.currentTimeMillis() > cardUntil) return;
-        String a = aName(), b = bName(), z = zName();
+        boolean pad = MarioGamepad.current() != null;
+        String a = pad ? "A" : aName(), b = pad ? "X" : bName(), z = pad ? "LT" : zName();
         String[][] rows = {
-                {"Move", moveNames()},
+                {"Move", pad ? "Left stick" : moveNames()},
                 {"A  jump / swim", a},
-                {"B  punch / kick / dive", b},
-                {"Z  crouch / ground pound", z},
-                {"Camera", "Mouse"},
+                {"B  punch / kick / dive", pad ? "X or B" : b},
+                {"Z  crouch / ground pound", pad ? "LT, RT or LB" : z},
+                {"Camera", pad ? "Right stick" : "Mouse"},
                 {"", ""},
                 {"Triple jump", a + " x3 on landing"},
                 {"Long jump", "run, " + z + " + " + a},
@@ -97,7 +100,9 @@ public final class MarioControls {
                 {"Dive", "run, " + b},
                 {"", ""},
                 {"Exit Mario", toggle.getBoundKeyLocalizedText().getString()},
-                {cardPinned ? "Hide this" : "Pin this", showControls.getBoundKeyLocalizedText().getString()},
+                {cardPinned ? "Hide this" : "Pin this", showControls.getBoundKeyLocalizedText().getString() + (pad ? " / View" : "")},
+                {"Pause", pad ? "Menu" : "Esc"},
+                {"Gamepad", pad ? MarioGamepad.current().name : "none (Options > Controls > Mario 64 Gamepad)"},
         };
         var tr = mc.textRenderer;
         int lineH = 10, labelW = 0, valueW = 0;
