@@ -9,8 +9,10 @@ the decompiled game code from [n64decomp/sm64](https://github.com/n64decomp/sm64
 ![poster](showcase/poster.png) · clip: [`showcase/mario64_in_minecraft.mp4`](showcase/mario64_in_minecraft.mp4)
 
 ## What works (verified in game)
-- Every SM64 move: run, single/double/triple jump, long jump, backflip/side flip, wall kick, ledge grab and climb,
-  punch/kick combo, dive, slide kick, ground pound, swimming (breaststroke and flutter), plus the knockback reactions.
+- Verified by the automated tests: run, single/double/triple jump, ledge grab and climb, punch, move-punch, dive, ground
+  pound, water plunge and swimming (breaststroke and flutter), and knockback. The rest of SM64's moveset (long jump,
+  backflip, side flip, wall kick, slide kick and so on) is the same decomp code and should work, but no test
+  exercises it yet.
 - Minecraft blocks become SM64 collision around Mario every tick. Straight stairs become SM64-style non-slippery
   ramps, slabs and carpets are step-ups, ice is SM64 ice (slippery), and lava and magma are `SURFACE_BURNING`
   (lava boost "yeowch" jump). Soul sand is shallow quicksand. Footstep sounds follow the block (grass, stone, snow,
