@@ -95,6 +95,14 @@ and SFX follow **Players**.
 Separate music volume needs the small libsm64 patch in `patches/libsm64-music-volume.patch` (adds `sm64_set_music_volume`).
 Apply it before `make`.
 
+## Shaders (Iris)
+Tested with **Sodium 0.6.13 + Iris 1.8.8** and **Complementary Reimagined r5.9.3**. Mario takes the pack's lighting,
+keeps his face textures (cap logo, eyes, moustache) and casts sun shadows like any other entity. That's because Mario
+is drawn *as* the player entity, through Minecraft's normal entity rendering, so Iris includes him in both its main
+pass and its shadow pass. Like Steve, Mario isn't drawn in first person.
+
+In Iris, **K** toggles shaders and **O** opens the shader pack list. Other packs should behave the same (not tested).
+
 ## Install (Windows)
 1. Install Fabric Loader 0.16.10 for 1.21.4 and Fabric API 0.119.4+1.21.4.
 2. Put `mario64mc-0.1.0.jar` in `mods/`.
@@ -110,7 +118,8 @@ Apply it before `make`.
   detection, deadzone maths, and a virtual Xbox pad checking that a half tilt walks and a full tilt runs, plus the
   right-stick camera, A/LT/X, and screenshots of the settings screens) and `runMusic` (grass, cave, water and End
   each start the right SM64 track with audible output, the Music slider silences it, and 20 s of output is recorded to
-  `mod/run/mario_music_bobomb.wav`). The last two end with a
+  `mod/run/mario_music_bobomb.wav`). Add `-Pshaders` to any run to load Sodium + Iris with Complementary from
+  `tools/shaders` (`MARIO64_TIME=11300` gives long shadows, and `MARIO64_NOMARIO=1` takes a plain-Steve baseline shot). The last two end with a
   `RESULT …=PASS|FAIL` line. Each opens a
   lab world, becomes Mario, drives scripted controller input, logs `MARIO64TEST` state lines (SM64 action IDs,
   positions, mob HP) and saves screenshots to `mod/run/screenshots`.

@@ -81,3 +81,12 @@ blocks, rendered with Mario's real model and textures from the user's ROM. Plus 
 16. A superflat world's sea level is -63, so "below sea level" is a bad cave test. Use the heightmap depth (>= 8 blocks, no sky light).
 17. A /fill in another dimension queued in the same tick as the /tp there fails (chunk not loaded). Build after arriving.
 18. The JNA direct mapping needs every bound symbol, so the mod requires the patched DLL (old sm64.dll -> UnsatisfiedLinkError).
+- Shaders: Sodium 0.6.13 + Iris 1.8.8 + Complementary Reimagined r5.9.3 (Modrinth, SHA1-verified). Drawing Mario from
+  WorldRenderEvents.AFTER_ENTITIES rendered and lit fine under Iris, decals included, but cast NO shadow (pig and Steve
+  did). Fix: draw Mario from the EntityRenderDispatcher.render mixin for the local player, into the caller's
+  VertexConsumerProvider with no manual draw(). Iris then calls it twice per frame (shadow pass m00=0.0039 ortho + main
+  pass), and the user confirmed the shadow from a screenshot. Vanilla stays at 1 draw per frame and runFlips still PASSes.
+19. In dev, Iris's jar-in-jar libs (jcpp, glsl-transformer, antlr4-runtime) aren't unpacked for files() deps, which gives
+    NoClassDefFoundError org/anarres/cpp/PreprocessorListener. Extract META-INF/jars and add them as runtimeOnly.
+20. For a mod-drawn mesh to cast shader shadows, draw it inside an entity's render call using the provided buffers.
+    World render events aren't replayed into Iris's shadow pass.

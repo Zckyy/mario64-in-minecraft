@@ -48,7 +48,8 @@ public final class AutoTest {
         if ("gamepad".equals(SCENARIO)) gamepadUi(mc);
         inWorldTicks++;
         if (inWorldTicks == 60) {
-            mc.player.networkHandler.sendChatCommand("time set noon");
+            String time = System.getenv("MARIO64_TIME"); // optional override, e.g. 11000 for long shadows
+            mc.player.networkHandler.sendChatCommand("time set " + (time != null ? time : "noon"));
             String setup = System.getProperty("mario64.setup");
             var srv = mc.getServer();
             java.util.UUID id = mc.player.getUuid();
@@ -57,6 +58,13 @@ public final class AutoTest {
                 for (String cmd : setup.split(";"))
                     srv.getCommandManager().executeWithPrefix(sp.getCommandSource().withSilent().withMaxLevel(4), cmd.trim());
             });
+        }
+        if (System.getenv("MARIO64_NOMARIO") != null) { // baseline: vanilla player, third person, no Mario
+            if (inWorldTicks == 120) { mc.player.setPitch(22); mc.player.setYaw(0);
+                mc.options.setPerspective(net.minecraft.client.option.Perspective.THIRD_PERSON_BACK); }
+            if (inWorldTicks == 200) shot(mc, "baseline_steve");
+            if (inWorldTicks == 230) { log(mc, "DONE"); mc.scheduleStop(); }
+            return;
         }
         if (inWorldTicks == 120) {
             mc.player.setPitch(22);
@@ -74,6 +82,10 @@ public final class AutoTest {
         MarioController m = MarioController.INSTANCE;
         if (t % 10 == 0) log(mc, String.format("t=%d action=0x%08X flags=0x%08X pos=(%.2f,%.2f,%.2f) health=0x%X tris=%d face=%.2f",
                 t, m.action, m.flags, m.renderXNow(), m.renderYNow(), m.renderZNow(), m.health, m.curTris, m.faceAngle));
+        if (t % 30 == 0) {
+            log(mc, String.format("render: mario draw calls %d over %d frames", MarioRenderer.drawCalls, mc.getCurrentFps()));
+            MarioRenderer.drawCalls = 0;
+        }
         if (t % 10 == 0 && mc.player != null) {
             var mobs = mc.world.getEntitiesByClass(net.minecraft.entity.LivingEntity.class, mc.player.getBoundingBox().expand(12), e -> e != mc.player);
             for (var e : mobs) log(mc, String.format("  mob %s hp=%.1f at (%.1f,%.1f,%.1f)", e.getType().getUntranslatedName(), e.getHealth(), e.getX(), e.getY(), e.getZ()));

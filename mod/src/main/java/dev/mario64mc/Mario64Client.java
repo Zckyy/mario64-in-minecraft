@@ -4,7 +4,6 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 
@@ -22,7 +21,6 @@ public class Mario64Client implements ClientModInitializer {
         ClientPlayConnectionEvents.DISCONNECT.register((h, mc) -> mc.execute(() -> {
             if (MarioController.INSTANCE.active) MarioController.INSTANCE.deactivate();
         }));
-        WorldRenderEvents.AFTER_ENTITIES.register(MarioRenderer::render);
         // "Mario 64 Gamepad..." button in Options > Controls
         net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((mc, screen, w, h) -> {
             if (screen instanceof net.minecraft.client.gui.screen.option.ControlsOptionsScreen) {

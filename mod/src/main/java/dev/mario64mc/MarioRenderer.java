@@ -1,17 +1,14 @@
 package dev.mario64mc;
 
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
 import dev.mario64mc.sm64.LibSM64;
@@ -23,6 +20,10 @@ import dev.mario64mc.sm64.LibSM64;
 public final class MarioRenderer {
     static final Identifier ATLAS = Identifier.of("mario64", "atlas");
     static final Identifier WHITE = Identifier.of("mario64", "white");
+
+    /** Debug: how often Mario was drawn (the shader shadow pass draws entities a second time per frame). */
+    public static int drawCalls;
+    public static int debugLeft = Boolean.getBoolean("mario64.debugDraw") || System.getenv("MARIO64_DEBUGDRAW") != null ? 6 : 0;
 
     private MarioRenderer() {}
 
@@ -41,26 +42,33 @@ public final class MarioRenderer {
         tm.registerTexture(WHITE, new NativeImageBackedTexture(white));
     }
 
-    static void render(WorldRenderContext ctx) {
+    /**
+     * Draws Mario in place of the local player's entity model, from EntityRenderDispatcher.render. Going through the
+     * entity path (and the caller's buffers, without our own draw calls) means shader mods like Iris treat Mario as a
+     * normal entity: he is lit by the pack and drawn into its shadow pass, so he casts shadows.
+     *
+     * @param x,y,z player's render position relative to the camera (what the dispatcher passes)
+     */
+    public static void renderAsPlayer(net.minecraft.entity.Entity player, double x, double y, double z, float tickDelta,
+                                      MatrixStack ms, VertexConsumerProvider consumers, int light) {
         MarioController m = MarioController.INSTANCE;
-        MinecraftClient mc = MinecraftClient.getInstance();
-        if (!m.active || m.curTris == 0 || mc.world == null || ctx.matrixStack() == null) return;
-
-        MatrixStack ms = ctx.matrixStack();
-        Vec3d cam = ctx.camera().getPos();
+        drawCalls++;
+        if (m.curTris == 0) return;
+        Vec3d at = player.getLerpedPos(tickDelta); // Mario's mesh is in origin-relative SM64 units
         ms.push();
-        ms.translate(m.ox - cam.x, m.oy - cam.y, m.oz - cam.z);
+        ms.translate(x - at.x + m.ox, y - at.y + m.oy, z - at.z + m.oz);
         ms.scale(1f / WorldCollision.SCALE, 1f / WorldCollision.SCALE, 1f / WorldCollision.SCALE);
         MatrixStack.Entry e = ms.peek();
-        int light = WorldRenderer.getLightmapCoordinates(mc.world, BlockPos.ofFloored(m.renderX, m.renderY + 0.8, m.renderZ));
-
-        VertexConsumerProvider.Immediate imm = mc.getBufferBuilders().getEntityVertexConsumers();
-        RenderLayer base = RenderLayer.getEntityCutoutNoCull(WHITE);
-        emit(imm.getBuffer(base), e, light, m, true);
-        imm.draw(base);
-        RenderLayer decal = RenderLayer.getEntityTranslucent(ATLAS);
-        emit(imm.getBuffer(decal), e, light, m, false);
-        imm.draw(decal);
+        if (debugLeft > 0) {
+            debugLeft--;
+            var mt = e.getPositionMatrix();
+            MarioController.LOG.info("MARIO64TEST draw xyz=({},{},{}) at=({},{},{}) consumers={} m30..32=({},{},{}) m00={}",
+                    String.format("%.2f", x), String.format("%.2f", y), String.format("%.2f", z),
+                    String.format("%.2f", at.x), String.format("%.2f", at.y), String.format("%.2f", at.z),
+                    consumers.getClass().getName(), mt.m30(), mt.m31(), mt.m32(), mt.m00());
+        }
+        emit(consumers.getBuffer(RenderLayer.getEntityCutoutNoCull(WHITE)), e, light, m, true);
+        emit(consumers.getBuffer(RenderLayer.getEntityTranslucent(ATLAS)), e, light, m, false);
         ms.pop();
     }
 
