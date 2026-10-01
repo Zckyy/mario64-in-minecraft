@@ -52,7 +52,10 @@ public final class MarioController {
     private final Memory gPos = new Memory(LibSM64.GEO_MAX_TRIANGLES * 9 * 4L), gNorm = new Memory(LibSM64.GEO_MAX_TRIANGLES * 9 * 4L),
             gCol = new Memory(LibSM64.GEO_MAX_TRIANGLES * 9 * 4L), gUv = new Memory(LibSM64.GEO_MAX_TRIANGLES * 6 * 4L);
     @SuppressWarnings("unused") // must stay reachable: native code holds the callback
-    private static final LibSM64.DebugPrint DEBUG_PRINT = msg -> LOG.info("[libsm64] {}", msg);
+    private static final LibSM64.DebugPrint DEBUG_PRINT = msg -> {
+        // libsm64's audio engine traces every command; only surface real problems
+        if (msg.startsWith("Tried") || msg.contains("ERROR") || msg.contains("rror")) LOG.warn("[libsm64] {}", msg);
+    };
 
     public boolean active;
     private int marioId = -1;
@@ -81,6 +84,10 @@ public final class MarioController {
     private float lastPlayerHealth = -1;
     private final Map<Integer, Integer> hitCooldown = new HashMap<>();
     private int tickCount;
+
+    private static volatile UUID marioPlayer;
+
+    public static boolean isMarioPlayer(UUID id) { return id.equals(marioPlayer); }
 
     private MarioController() {}
 
@@ -153,6 +160,7 @@ public final class MarioController {
         savedPerspective = mc.options.getPerspective();
         mc.options.setPerspective(Perspective.THIRD_PERSON_BACK);
         active = true;
+        marioPlayer = player.getUuid();
         MarioAudio.setActive(true);
         say(mc, Formatting.GOLD, "It's-a me, Mario!  [WASD] move  [Space] A  [Left click] B  [Shift] Z  [M] exit");
     }
@@ -162,6 +170,7 @@ public final class MarioController {
         if (marioId >= 0) LibSM64.sm64_mario_delete(marioId);
         marioId = -1;
         active = false;
+        marioPlayer = null;
         MarioAudio.setActive(false);
         if (savedPerspective != null) mc.options.setPerspective(savedPerspective);
         if (mc.player != null) mc.player.setVelocity(0, 0, 0);
@@ -380,6 +389,11 @@ public final class MarioController {
         prevMario[0] += dx; prevMario[1] += dy; prevMario[2] += dz;
         rebuild(new BlockPos(nx, ny, nz));
         LibSM64.sm64_set_mario_position(marioId, curMario[0], curMario[1], curMario[2]);
+    }
+
+    public java.util.List<String> dumpNear(int radiusUnits) {
+        int x = (int) curMario[0], y = (int) curMario[1], z = (int) curMario[2];
+        return collision.dump(x - radiusUnits, y - radiusUnits, z - radiusUnits, x + radiusUnits, y + radiusUnits * 2, z + radiusUnits);
     }
 
     private void setOrigin(BlockPos p) { ox = p.getX(); oy = p.getY(); oz = p.getZ(); }

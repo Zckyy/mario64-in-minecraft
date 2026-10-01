@@ -39,7 +39,7 @@ public final class AutoTest {
                 rules.get(GameRules.DO_MOB_SPAWNING).set(false, null);
                 LevelInfo info = new LevelInfo(WORLD, GameMode.CREATIVE, false, Difficulty.PEACEFUL, true, rules, DataConfiguration.SAFE_MODE);
                 mc.createIntegratedServerLoader().createAndStart(WORLD, info, new GeneratorOptions(64646464L, false, false),
-                        lookup -> lookup.getOrThrow(RegistryKeys.WORLD_PRESET).getOrThrow(WorldPresets.DEFAULT).value().createDimensionsRegistryHolder(),
+                        lookup -> lookup.getOrThrow(RegistryKeys.WORLD_PRESET).getOrThrow("flat".equals(System.getProperty("mario64.preset")) ? WorldPresets.FLAT : WorldPresets.DEFAULT).value().createDimensionsRegistryHolder(),
                         new TitleScreen());
             }
         }
@@ -52,6 +52,7 @@ public final class AutoTest {
         }
         if (inWorldTicks == 120) {
             mc.player.setPitch(22);
+            mc.player.setYaw(0);
             MarioController.INSTANCE.activate();
             t = 0;
             log(mc, "activated active=" + MarioController.INSTANCE.active);
@@ -65,8 +66,16 @@ public final class AutoTest {
         MarioController m = MarioController.INSTANCE;
         if (t % 10 == 0) log(mc, String.format("t=%d action=0x%08X flags=0x%08X pos=(%.2f,%.2f,%.2f) health=0x%X tris=%d face=%.2f",
                 t, m.action, m.flags, m.renderXNow(), m.renderYNow(), m.renderZNow(), m.health, m.curTris, m.faceAngle));
-        int[] shots = {40, 100, 132, 175, 228, 262, 290, 352, 362, 420};
+        if (t % 10 == 0 && mc.player != null) {
+            var mobs = mc.world.getEntitiesByClass(net.minecraft.entity.LivingEntity.class, mc.player.getBoundingBox().expand(12), e -> e != mc.player);
+            for (var e : mobs) log(mc, String.format("  mob %s hp=%.1f at (%.1f,%.1f,%.1f)", e.getType().getUntranslatedName(), e.getHealth(), e.getX(), e.getY(), e.getZ()));
+        }
+        int[] shots = "course".equals(SCENARIO) ? new int[]{40, 70, 95, 120, 150, 180, 210, 250, 290, 330} : new int[]{40, 100, 132, 175, 228, 262, 290, 352, 362, 420};
         for (int s : shots) if (t == s) shot(mc, "mario_" + SCENARIO + "_t" + t);
+        if (t == 80) {
+            log(mc, "origin " + m.ox + "," + m.oy + "," + m.oz);
+            for (String line : m.dumpNear(150)) log(mc, "  surf " + line);
+        }
         if (t == 470) {
             log(mc, "DONE");
             mc.scheduleStop();
@@ -77,6 +86,12 @@ public final class AutoTest {
     static void fillInputs(float[] o) {
         java.util.Arrays.fill(o, 0);
         if (t < 0) return;
+        if ("course".equals(SCENARIO)) {
+            if (t >= 45 && t < 330) o[1] = -1;                    // keep running/swimming forward
+            if (t >= 95 && t < 200 && t % 20 < 3) o[3] = 1;       // punch whatever is in front
+            if (t >= 230 && t % 16 < 4) o[2] = 1;                 // swim strokes / jump out
+            return;
+        }
         if (t >= 45 && t < 190) o[1] = -1;          // run forward
         if (in(120, 124) || in(137, 141) || in(154, 158)) o[2] = 1; // single, double, triple jump
         if (in(220, 223)) o[3] = 1;                 // punch

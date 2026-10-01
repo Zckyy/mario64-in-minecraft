@@ -31,3 +31,17 @@ loom {
         }
     }
 }
+
+loom {
+    runs {
+        course {
+            inherit client
+            name 'Mario Course'
+            vmArg '-Dmario64.autotest=course'
+            vmArg '-Dmario64.world=MarioFlat'
+            vmArg '-Dmario64.preset=flat'
+            vmArg '-Dmario64.setup=tp @s 0.5 -60 0.5 0 0;fill -1 -60 4 1 -60 8 stone;fill -1 -59 5 1 -59 8 stone;fill -1 -58 6 1 -58 8 stone;setblock 0 -60 3 oak_stairs[facing=south];setblock 0 -59 4 oak_stairs[facing=south];setblock 0 -58 5 oak_stairs[facing=south];kill @e[type=pig];summon pig 0 -60 12 {NoAI:1b};fill -3 -63 15 3 -61 22 water'
+            programArgs '--width', '1280', '--height', '720'
+        }
+    }
+}

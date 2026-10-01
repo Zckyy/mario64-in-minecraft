@@ -2,6 +2,6 @@
   "required": true,
   "package": "dev.mario64mc.mixin",
   "compatibilityLevel": "JAVA_21",
-  "client": ["PlayerEntityMixin", "ClientPlayerEntityMixin", "EntityRenderDispatcherMixin", "MinecraftClientMixin", "GameRendererMixin", "ClientPlayNetworkHandlerMixin"],
+  "client": ["PlayerEntityMixin", "ClientPlayerEntityMixin", "EntityRenderDispatcherMixin", "MinecraftClientMixin", "GameRendererMixin", "ClientPlayNetworkHandlerMixin", "ServerPlayNetworkHandlerMixin"],
   "injectors": { "defaultRequire": 1 }
 }

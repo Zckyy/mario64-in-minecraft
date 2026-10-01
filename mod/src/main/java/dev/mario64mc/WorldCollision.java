@@ -58,9 +58,15 @@ public final class WorldCollision {
                     addBlock(world, p, n, true);
                 }
                 // keep a floor under every column so SM64 never sees "no floor" (which acts as an invisible wall)
+                boolean found = false;
                 for (int y = minY - 1; y >= Math.max(world.getBottomY(), minY - EXTRA_DOWN); y--) {
                     p.set(x, y, z);
-                    if (addBlock(world, p, n, false)) break;
+                    if (addBlock(world, p, n, false)) { found = true; break; }
+                }
+                if (!found) { // void or a very deep pit: a floor far below, so the drop is a fall and not a wall
+                    type = SURFACE_DEFAULT; terrain = TERRAIN_STONE;
+                    double fy = minY - EXTRA_DOWN - 1;
+                    quad(x, fy, z, x + 1, fy, z, x + 1, fy, z + 1, x, fy, z + 1, 0, 1, 0);
                 }
             }
         }
@@ -198,6 +204,20 @@ public final class WorldCollision {
         buf.putShort(type).putShort((short) 0).putShort(terrain).putShort((short) 0);
         for (int i : v) buf.putInt(i);
         count++;
+    }
+
+    /** Debug: every triangle with a vertex inside the given SM64-unit box. */
+    public java.util.List<String> dump(int x0, int y0, int z0, int x1, int y1, int z1) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            int b = i * LibSM64.SURFACE_SIZE;
+            int[] v = new int[9];
+            for (int k = 0; k < 9; k++) v[k] = buf.getInt(b + 8 + k * 4);
+            boolean hit = false;
+            for (int k = 0; k < 3; k++) hit |= v[k*3] >= x0 && v[k*3] <= x1 && v[k*3+1] >= y0 && v[k*3+1] <= y1 && v[k*3+2] >= z0 && v[k*3+2] <= z1;
+            if (hit) out.add(String.format("type=%d (%d,%d,%d) (%d,%d,%d) (%d,%d,%d)", buf.getShort(b), v[0],v[1],v[2],v[3],v[4],v[5],v[6],v[7],v[8]));
+        }
+        return out;
     }
 
     private void grow() {

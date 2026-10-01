@@ -69,6 +69,9 @@ public final class MarioRenderer {
         float a = m.alpha;
         float[] cur = m.curPos, prev = m.prevPos, n = m.curNorm, c = m.curCol, uv = m.curUv;
         for (int t = 0; t < m.curTris; t++) {
+            // libsm64 marks untextured triangles with uv (1,1); with GL_REPEAT that samples texel (0,0), so skip them
+            if (!colourPass && uv[t * 6] == 1f && uv[t * 6 + 1] == 1f && uv[t * 6 + 2] == 1f && uv[t * 6 + 3] == 1f) continue;
+            float push = colourPass ? 0f : 0.35f; // lift decals off the base surface (SM64 units) to avoid z-fighting
             for (int k = 0; k < 4; k++) {
                 int v = t * 3 + Math.min(k, 2); // quads mode: repeat the 3rd vertex
                 int i = v * 3;
@@ -78,7 +81,7 @@ public final class MarioRenderer {
                     y = prev[i + 1] + (y - prev[i + 1]) * a;
                     z = prev[i + 2] + (z - prev[i + 2]) * a;
                 }
-                vc.vertex(e, x, y, z);
+                vc.vertex(e, x + n[i] * push, y + n[i + 1] * push, z + n[i + 2] * push);
                 if (colourPass) vc.color(c[i], c[i + 1], c[i + 2], 1f).texture(0.5f, 0.5f);
                 else vc.color(1f, 1f, 1f, 1f).texture(uv[v * 2], uv[v * 2 + 1]);
                 vc.overlay(OverlayTexture.DEFAULT_UV).light(light).normal(e, n[i], n[i + 1], n[i + 2]);
