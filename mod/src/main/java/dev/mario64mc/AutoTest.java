@@ -83,7 +83,11 @@ public final class AutoTest {
             for (String line : m.dumpNear(150)) log(mc, "  surf " + line);
         }
         if ("tech".equals(SCENARIO)) techCheck(mc, m);
-        if (t == ("show".equals(SCENARIO) ? 520 : "tech".equals(SCENARIO) ? 360 : 470)) {
+        if ("flips".equals(SCENARIO)) flipsCheck(mc, m);
+        if (t == ("show".equals(SCENARIO) ? 520 : "tech".equals(SCENARIO) ? 360 : "flips".equals(SCENARIO) ? 420 : 470)) {
+            if ("flips".equals(SCENARIO)) log(mc, String.format("RESULT backflip=%s height=%.2f side_flip=%s height=%.2f slide_kick=%s",
+                    flipSeen[0] ? "PASS" : "FAIL", flipPeak[0] - flipBase[0], flipSeen[1] ? "PASS" : "FAIL", flipPeak[1] - flipBase[1],
+                    flipSeen[2] ? "PASS" : "FAIL"));
             if ("tech".equals(SCENARIO)) log(mc, String.format("RESULT long_jump=%s distance=%.2f blocks wall_kick=%s",
                     longJumpLanded ? "PASS" : "FAIL", longJumpEndZ - longJumpStartZ, wallKicked ? "PASS" : "FAIL"));
             log(mc, "DONE");
@@ -95,6 +99,7 @@ public final class AutoTest {
     static void fillInputs(float[] o) {
         java.util.Arrays.fill(o, 0);
         if (t < 0) return;
+        if ("flips".equals(SCENARIO)) { flipsInputs(o); return; }
         if ("tech".equals(SCENARIO)) {
             MarioController m = MarioController.INSTANCE;
             double z = m.renderZNow();
@@ -153,6 +158,65 @@ public final class AutoTest {
             lastAction = m.action;
         }
         if (t == shotAt) shot(mc, "mario_tech_" + (wallKicked ? "wallkick" : "longjump"));
+    }
+
+    // --- "flips": backflip, side flip, slide kick. A tiny state machine driven by Mario's real action state. ---
+    static final int ACT_CROUCHING = 0x0C008220, ACT_START_CROUCHING = 0x0C008221, ACT_BACKFLIP = 0x01000883,
+            ACT_TURNING_AROUND = 0x00000443, ACT_FINISH_TURNING_AROUND = 0x00000444, ACT_SIDE_FLIP = 0x01000887,
+            ACT_SLIDE_KICK = 0x018008AA, ACT_SLIDE_KICK_SLIDE = 0x0080045A;
+    static final int[] FLIP_ACTIONS = {ACT_BACKFLIP, ACT_SIDE_FLIP, ACT_SLIDE_KICK};
+    static final String[] FLIP_NAMES = {"backflip", "sideflip", "slidekick"};
+    private static int phase, phaseStart = 40, landedAt = -1;
+    private static final boolean[] flipSeen = new boolean[3];
+    private static final double[] flipBase = new double[3], flipPeak = new double[3];
+
+    private static void flipsInputs(float[] o) {
+        MarioController m = MarioController.INSTANCE;
+        if (t < 40 || phase > 2) return;
+        int pt = t - phaseStart;
+        boolean seen = flipSeen[phase];
+        if (phase == 0) {                                   // backflip: hold Z standing still, fresh A once crouched
+            if (!seen) {
+                o[4] = 1;
+                if (m.action == ACT_CROUCHING || m.action == ACT_START_CROUCHING) o[2] = pt % 4 == 3 ? 1 : 0;
+            }
+        } else if (phase == 1) {                            // side flip: run, yank the stick back, A while skidding
+            if (!seen) {
+                o[1] = pt < 30 ? -1 : 1;
+                if (m.action == ACT_TURNING_AROUND || m.action == ACT_FINISH_TURNING_AROUND) o[2] = 1;
+            }
+        } else {                                            // slide kick: run, Z into a crouch slide, fresh B
+            if (!seen) {
+                o[1] = -1;
+                if (pt >= 30) o[4] = 1;
+                if (m.action == 0x04808459) o[3] = 1;       // ACT_CROUCH_SLIDE
+            }
+        }
+    }
+
+    private static void flipsCheck(MinecraftClient mc, MarioController m) {
+        if (m.action != lastAction) {
+            log(mc, String.format("action 0x%08X -> 0x%08X at t=%d pos=(%.2f,%.2f,%.2f)", lastAction, m.action, t,
+                    m.renderXNow(), m.renderYNow(), m.renderZNow()));
+            lastAction = m.action;
+        }
+        if (phase > 2) return;
+        if (!flipSeen[phase] && m.action == FLIP_ACTIONS[phase]) {
+            flipSeen[phase] = true;
+            flipBase[phase] = flipPeak[phase] = m.renderYNow();
+            shotAt = t + 6;
+            log(mc, FLIP_NAMES[phase] + " started at t=" + t);
+        }
+        if (flipSeen[phase]) {
+            flipPeak[phase] = Math.max(flipPeak[phase], m.renderYNow());
+            boolean grounded = (m.action & MarioController.ACT_FLAG_AIR) == 0 && m.action != ACT_SLIDE_KICK_SLIDE;
+            if (grounded && landedAt < 0) landedAt = t;
+            if (landedAt >= 0 && t - landedAt > 25) { phase++; phaseStart = t; landedAt = -1; }
+        } else if (t - phaseStart > 120) {                  // give up on this move, move on
+            log(mc, FLIP_NAMES[phase] + " never triggered");
+            phase++; phaseStart = t;
+        }
+        if (t == shotAt) shot(mc, "mario_flips_" + FLIP_NAMES[Math.min(phase, 2)]);
     }
 
     private static boolean in(int a, int b) { return t >= a && t < b; }

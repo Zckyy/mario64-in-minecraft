@@ -9,10 +9,9 @@ the decompiled game code from [n64decomp/sm64](https://github.com/n64decomp/sm64
 ![poster](showcase/poster.png) · clip: [`showcase/mario64_in_minecraft.mp4`](showcase/mario64_in_minecraft.mp4)
 
 ## What works (verified in game)
-- Verified by the automated tests: run, single/double/triple jump, **long jump** (14.5 blocks), **wall kick**, ledge
-  grab and climb, punch, move-punch, dive, ground pound, water plunge and swimming (breaststroke and flutter), and
-  knockback. The rest of SM64's moveset (backflip, side flip, slide kick and so on) is the same decomp code and should
-  work, but no test exercises it yet.
+- Verified by the automated tests: run, single/double/triple jump, **long jump** (14.5 blocks), **wall kick**,
+  **backflip** and **side flip** (4.5 blocks each, both launch at SM64's vel.y 62), **slide kick**, ledge grab and climb,
+  punch, move-punch, dive, ground pound, water plunge and swimming (breaststroke and flutter), and knockback.
 - Minecraft blocks become SM64 collision around Mario every tick. Straight stairs become SM64-style non-slippery
   ramps, slabs and carpets are step-ups, ice is SM64 ice (slippery), and lava and magma are `SURFACE_BURNING`
   (lava boost "yeowch" jump). Soul sand is shallow quicksand. Footstep sounds follow the block (grass, stone, snow,
@@ -42,7 +41,8 @@ the decompiled game code from [n64decomp/sm64](https://github.com/n64decomp/sm64
 - `sm64.dll`: clone libsm64, then run `python import-mario-geo.py` (it fetches Mario's geo/model sources from n64decomp/sm64), then `make lib CC=gcc` with w64devkit/MSYS2 gcc.
 - Mod: `cd mod && ./gradlew build` (JDK 21) produces `mod/build/libs/mario64mc-0.1.0.jar`.
 - Automated in-game tests: `./gradlew runAutotest` (hills: moves), `runCourse`, `runShow` (flat course), `runTech`
-  (long jump and wall kick, with a `RESULT long_jump=PASS|FAIL distance=… wall_kick=PASS|FAIL` line). Each opens a
+  (long jump and wall kick) and `runFlips` (backflip, side flip, slide kick). The last two end with a
+  `RESULT …=PASS|FAIL` line. Each opens a
   lab world, becomes Mario, drives scripted controller input, logs `MARIO64TEST` state lines (SM64 action IDs,
   positions, mob HP) and saves screenshots to `mod/run/screenshots`.
 

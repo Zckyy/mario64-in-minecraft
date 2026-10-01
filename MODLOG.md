@@ -54,3 +54,8 @@ blocks, rendered with Mario's real model and textures from the user's ROM. Plus 
   (radius 50), fresh A next frame -> WALL_KICK_AIR 0x03000886, flies back to z=24.8. RESULT long_jump=PASS wall_kick=PASS.
 10. Wall kick needs a *fresh* A press (INPUT_A_PRESSED is an edge) within actionTimer <= 2 of ACT_AIR_HIT_WALL, and only
     happens if forwardVel > 16 when hitting the wall. Scripted tests must react to the action state, not fixed ticks.
+- flips (runFlips): state machine on the action ID. Hold Z standing -> START_CROUCHING 0x0C008221, fresh A -> BACKFLIP
+  0x01000883 (back 3.3 blocks, peak +4.5). Run, reverse the stick -> TURNING_AROUND 0x00000443, A -> SIDE_FLIP 0x01000887
+  (+4.5). Run, Z -> CROUCH_SLIDE, fresh B -> SLIDE_KICK 0x018008AA -> SLIDE_KICK_SLIDE 0x0080045A (lunge ~6 blocks, slide to
+  8.5 total). RESULT backflip=PASS side_flip=PASS slide_kick=PASS. Equal heights are correct: both use vel.y 62 in
+  set_mario_action_airborne.
