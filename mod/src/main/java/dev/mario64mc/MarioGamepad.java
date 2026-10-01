@@ -44,7 +44,7 @@ public final class MarioGamepad {
     static void poll() {
         current = null;
         if (!MarioConfig.get().gamepadEnabled) return;
-        if (injected != null) { current = injected; return; }
+        if (injected != null) { current = injected; keepAwake(injected); return; }
         if (jid < 0 || !GLFW.glfwJoystickIsGamepad(jid)) jid = findGamepad();
         if (jid < 0 || !GLFW.glfwGetGamepadState(jid, RAW)) return;
 
@@ -63,6 +63,16 @@ public final class MarioGamepad {
         s.back = btn(GLFW.GLFW_GAMEPAD_BUTTON_BACK);
         s.name = GLFW.glfwGetGamepadName(jid);
         current = s;
+        keepAwake(s);
+    }
+
+    /**
+     * Minecraft 1.21.2+ caps the game at 30 FPS after 60 s without keyboard/mouse input (10 FPS after 10 min). Gamepad
+     * input is invisible to it, so report real pad activity as input, the same way a key press does.
+     */
+    private static void keepAwake(State s) {
+        boolean used = s.stickX != 0 || s.stickY != 0 || s.camX != 0 || s.camY != 0 || s.a || s.b || s.z || s.start || s.back;
+        if (used) MinecraftClient.getInstance().getInactivityFpsLimiter().onInput();
     }
 
     /** Edge-triggered menu buttons, handled on the client tick. */

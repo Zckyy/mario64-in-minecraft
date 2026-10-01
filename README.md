@@ -66,7 +66,10 @@ detecting a GameSir G7 SE as "XInput Gamepad (GLFW)". The left stick is truly an
 | Menu | Pause |
 | View | Pin / hide the controls card |
 
-Settings live under **Options → Controls → Mario 64 Gamepad…**: gamepad on/off, stick deadzone (default 15 %), right-stick
+Gamepad use counts as activity for Minecraft's *Inactivity FPS Limit*, so playing on a controller doesn't trip the
+"AFK" cap (30 FPS after 1 minute, 10 FPS after 10 minutes, since 1.21.2).
+
+Settings live under **Options → Controls → Mario 64 Settings…**: gamepad on/off, stick deadzone (default 15 %), right-stick
 camera speed and invert Y. They're saved in `config/mario64/mario64.json`, and the screen shows which controller was
 detected. Keyboard and mouse keep working alongside the pad. *GameSir G7 SE tip:* its two back paddles are remapped in
 the controller itself. Mapping one to **LT** puts Z (long jump, backflip, ground pound) under a finger.
@@ -119,7 +122,8 @@ In Iris, **K** toggles shaders and **O** opens the shader pack list. Other packs
   right-stick camera, A/LT/X, and screenshots of the settings screens) and `runMusic` (grass, cave, water and End
   each start the right SM64 track with audible output, the Music slider silences it, and 20 s of output is recorded to
   `mod/run/mario_music_bobomb.wav`). Add `-Pshaders` to any run to load Sodium + Iris with Complementary from
-  `tools/shaders` (`MARIO64_TIME=11300` gives long shadows, and `MARIO64_NOMARIO=1` takes a plain-Steve baseline shot). The last two end with a
+  `tools/shaders` (`MARIO64_TIME=11300` gives long shadows, and `MARIO64_NOMARIO=1` takes a plain-Steve baseline shot). `runSoak` plays 3 minutes on a virtual gamepad and logs
+  FPS, heap and per-part timings every 5 s. The last two end with a
   `RESULT …=PASS|FAIL` line. Each opens a
   lab world, becomes Mario, drives scripted controller input, logs `MARIO64TEST` state lines (SM64 action IDs,
   positions, mob HP) and saves screenshots to `mod/run/screenshots`.

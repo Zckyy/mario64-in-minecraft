@@ -139,3 +139,15 @@ if (project.hasProperty('shaders')) {
                 '../tools/shaders/iris-libs/META-INF/jars/antlr4-runtime-4.13.1.jar')
     }
 }
+
+loom {
+    runs {
+        soak {
+            inherit client
+            name 'Mario Soak (perf)'
+            vmArg '-Dmario64.autotest=soak'
+            vmArg '-Dmario64.world=MarioSoak'
+            programArgs '--width', '1280', '--height', '720'
+        }
+    }
+}

@@ -54,6 +54,7 @@ public final class MarioRenderer {
         MarioController m = MarioController.INSTANCE;
         drawCalls++;
         if (m.curTris == 0) return;
+        long r0 = System.nanoTime();
         Vec3d at = player.getLerpedPos(tickDelta); // Mario's mesh is in origin-relative SM64 units
         ms.push();
         ms.translate(x - at.x + m.ox, y - at.y + m.oy, z - at.z + m.oz);
@@ -70,6 +71,7 @@ public final class MarioRenderer {
         emit(consumers.getBuffer(RenderLayer.getEntityCutoutNoCull(WHITE)), e, light, m, true);
         emit(consumers.getBuffer(RenderLayer.getEntityTranslucent(ATLAS)), e, light, m, false);
         ms.pop();
+        Perf.renderNs += System.nanoTime() - r0;
     }
 
     private static void emit(VertexConsumer vc, MatrixStack.Entry e, int light, MarioController m, boolean colourPass) {

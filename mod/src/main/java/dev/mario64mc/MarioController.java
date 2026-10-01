@@ -202,11 +202,17 @@ public final class MarioController {
         if (mc.isPaused() || player.isDead()) dt = 0;
         gamepadCamera(mc, player, dt);
         acc += dt;
+        long f0 = System.nanoTime();
+        int n = 0;
         while (acc >= TICK) {
             acc -= TICK;
             tickOnce(mc, player);
+            n++;
             if (!active) return;
         }
+        Perf.frames++;
+        Perf.maxTicksPerFrame = Math.max(Perf.maxTicksPerFrame, n);
+        Perf.frameNs += System.nanoTime() - f0;
         alpha = (float) (acc / TICK);
         renderX = ox + lerp(prevMario[0], curMario[0], alpha) / S;
         renderY = oy + lerp(prevMario[1], curMario[1], alpha) / S;
@@ -288,7 +294,10 @@ public final class MarioController {
         prevTris = curTris;
         System.arraycopy(curMario, 0, prevMario, 0, 3);
 
+        long t0 = System.nanoTime();
         LibSM64.sm64_mario_tick(marioId, inputs, state, geoBuf);
+        Perf.tickNs += System.nanoTime() - t0;
+        Perf.ticks++;
 
         state.read(LibSM64.STATE_POS, curMario, 0, 3);
         state.read(LibSM64.STATE_VEL, vel, 0, 3);
@@ -303,7 +312,9 @@ public final class MarioController {
         gCol.read(0, curCol, 0, curTris * 9);
         gUv.read(0, curUv, 0, curTris * 6);
 
+        long t1 = System.nanoTime();
         attacks(mc, player);
+        Perf.attackNs += System.nanoTime() - t1;
         if (AutoTest.enabled()) AutoTest.marioTick(mc);
     }
 
@@ -430,8 +441,14 @@ public final class MarioController {
     private void setOrigin(BlockPos p) { ox = p.getX(); oy = p.getY(); oz = p.getZ(); }
 
     private void rebuild(BlockPos center) {
+        long t0 = System.nanoTime();
         collision.build(world, center, ox, oy, oz);
+        long t1 = System.nanoTime();
         LibSM64.sm64_static_surfaces_load(com.sun.jna.Native.getDirectBufferPointer(collision.buffer()), collision.count());
+        Perf.buildNs += t1 - t0;
+        Perf.buildLoadNs += System.nanoTime() - t1;
+        Perf.builds++;
+        Perf.surfaces = collision.count();
         lastBuildPos = center;
         ticksSinceBuild = 0;
     }

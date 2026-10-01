@@ -82,7 +82,7 @@ public final class AutoTest {
         MarioController m = MarioController.INSTANCE;
         if (t % 10 == 0) log(mc, String.format("t=%d action=0x%08X flags=0x%08X pos=(%.2f,%.2f,%.2f) health=0x%X tris=%d face=%.2f",
                 t, m.action, m.flags, m.renderXNow(), m.renderYNow(), m.renderZNow(), m.health, m.curTris, m.faceAngle));
-        if (t % 30 == 0) {
+        if (t % 30 == 0 && !"soak".equals(SCENARIO)) {
             log(mc, String.format("render: mario draw calls %d over %d frames", MarioRenderer.drawCalls, mc.getCurrentFps()));
             MarioRenderer.drawCalls = 0;
         }
@@ -99,6 +99,7 @@ public final class AutoTest {
         if ("controls".equals(SCENARIO)) { controlsCheck(mc); return; }
         if ("gamepad".equals(SCENARIO)) { gamepadCheck(mc, m); return; }
         if ("music".equals(SCENARIO)) { musicCheck(mc); return; }
+        if ("soak".equals(SCENARIO)) { soakCheck(mc); return; }
         if ("tech".equals(SCENARIO)) techCheck(mc, m);
         if ("flips".equals(SCENARIO)) flipsCheck(mc, m);
         if (t == ("show".equals(SCENARIO) ? 520 : "tech".equals(SCENARIO) ? 360 : "flips".equals(SCENARIO) ? 420 : 470)) {
@@ -117,7 +118,8 @@ public final class AutoTest {
         java.util.Arrays.fill(o, 0);
         if (t < 0) return;
         if ("flips".equals(SCENARIO)) { flipsInputs(o); return; }
-        if ("gamepad".equals(SCENARIO) || "controls".equals(SCENARIO) || "music".equals(SCENARIO)) return; // driven by the (virtual) gamepad / UI
+        if ("gamepad".equals(SCENARIO) || "controls".equals(SCENARIO) || "music".equals(SCENARIO)) return;
+        if ("soak".equals(SCENARIO)) return;                       // driven by the virtual gamepad, like a real player // driven by the (virtual) gamepad / UI
         if ("tech".equals(SCENARIO)) {
             MarioController m = MarioController.INSTANCE;
             double z = m.renderZNow();
@@ -176,6 +178,20 @@ public final class AutoTest {
             lastAction = m.action;
         }
         if (t == shotAt) shot(mc, "mario_tech_" + (wallKicked ? "wallkick" : "longjump"));
+    }
+
+    // --- "soak": 3 minutes of play, perf every 5 s ---
+    private static long soakStart;
+    private static void soakCheck(MinecraftClient mc) {
+        if (t == 1) { soakStart = System.nanoTime(); pad.name = "Virtual Xbox Controller (soak)"; MarioGamepad.inject(pad); }
+        double a = t / 150.0;                                        // run in wide circles, hop every ~2 s
+        pad.stickX = (float) Math.sin(a) * 0.6f; pad.stickY = -1f; pad.a = t % 60 < 3;
+        if (t % 150 == 0) {
+            Runtime rt = Runtime.getRuntime();
+            log(mc, String.format("soak %3ds fps=%d heapMB=%d | %s", (System.nanoTime() - soakStart) / 1_000_000_000L,
+                    mc.getCurrentFps(), (rt.totalMemory() - rt.freeMemory()) >> 20, Perf.report()));
+        }
+        if (t == 30 * 180) { MarioGamepad.inject(null); log(mc, "DONE"); mc.scheduleStop(); }
     }
 
     // --- "music": the SM64 soundtrack follows where Mario is ---

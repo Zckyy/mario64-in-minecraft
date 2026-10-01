@@ -90,3 +90,9 @@ blocks, rendered with Mario's real model and textures from the user's ROM. Plus 
     NoClassDefFoundError org/anarres/cpp/PreprocessorListener. Extract META-INF/jars and add them as runtimeOnly.
 20. For a mod-drawn mesh to cast shader shadows, draw it inside an entity's render call using the provided buffers.
     World render events aren't replayed into Iris's shadow pass.
+- Perf: the user reported FPS tanking after about a minute. runSoak (3 min, shaders) showed mod costs flat (sm64 tick ~0.2 ms,
+  rebuild ~1 ms, render ~0.17 ms/frame), heap and process memory stable (no leak), but FPS 118 -> exactly 30 at 64 s.
+  Cause: MC 1.21.2+ InactivityFpsLimiter, "afk" by default: 30 FPS after 60 s with no kb/mouse input, 10 FPS after
+  10 min. Gamepad input isn't seen. Fix: MarioGamepad calls client.getInactivityFpsLimiter().onInput() on real pad
+  activity. Soak via virtual pad then holds 117-120 FPS for 3 min. The user confirmed it's fixed.
+21. "FPS drops to exactly 30 after 60 s" is the inactivity limiter, not the mod. Any non-kb/mouse input path must call onInput().
