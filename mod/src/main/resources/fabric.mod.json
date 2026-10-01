@@ -5,6 +5,7 @@
   "name": "Mario 64 in Minecraft",
   "description": "Play as the real Super Mario 64 Mario (n64decomp/sm64 via libsm64) in Minecraft. Requires your own SM64 US ROM.",
   "authors": ["Zckyy", "Claude (AI)"],
+  "contact": { "homepage": "https://github.com/Zckyy/mario64-in-minecraft", "sources": "https://github.com/Zckyy/mario64-in-minecraft" },
   "license": "MIT",
   "environment": "client",
   "entrypoints": { "client": ["dev.mario64mc.Mario64Client"] },

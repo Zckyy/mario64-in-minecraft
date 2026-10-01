@@ -12,3 +12,6 @@ showcase/moves.mp4
 showcase/course.mp4
 showcase/show.mp4
 backups/
+showcase/
+build/
+*.mp3
