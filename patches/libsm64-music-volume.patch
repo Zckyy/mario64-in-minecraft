@@ -1,0 +1,52 @@
+diff --git a/src/decomp/audio/effects.c b/src/decomp/audio/effects.c
+index 76bb584..3fc33f7 100644
+--- a/src/decomp/audio/effects.c
++++ b/src/decomp/audio/effects.c
+@@ -76,7 +76,9 @@ static void sequence_channel_process_sound(struct SequenceChannel *seqChannel) {
+         struct SequenceChannelLayer *layer = seqChannel->layers[i];
+         if (layer != NULL && layer->enabled && layer->note != NULL) {
+             layer->noteFreqScale = layer->freqScale * seqChannel->freqScale;
+-            layer->noteVelocity = layer->velocitySquare * (channelVolume * gTrackVolume);
++            // mario64mc: gTrackVolume scales music only; sequence player 2 is SM64's sound-effect player
++            layer->noteVelocity = layer->velocitySquare * (channelVolume
++                * (seqChannel->seqPlayer == &gSequencePlayers[2] ? 1.0f : gTrackVolume));
+             layer->notePan = (layer->pan * panLayerWeight) + panFromChannel;
+         }
+     }
+diff --git a/src/libsm64.c b/src/libsm64.c
+index b7db0b1..6a52d0f 100644
+--- a/src/libsm64.c
++++ b/src/libsm64.c
+@@ -3,6 +3,7 @@
+ #endif
+ 
+ #include "libsm64.h"
++#include "decomp/audio/effects.h"
+ 
+ #include <stdio.h>
+ #include <stdlib.h>
+@@ -721,6 +722,12 @@ SM64_LIB_FN void sm64_play_sound_global(int32_t soundBits)
+     play_sound(soundBits,gGlobalSoundSource);
+ }
+ 
++// mario64mc: separate music volume (gTrackVolume, applied to the level/environment sequence players)
++SM64_LIB_FN void sm64_set_music_volume(float vol)
++{
++    gTrackVolume = vol;
++}
++
+ SM64_LIB_FN void sm64_set_sound_volume(float vol)
+ {
+     gAudioVolume = vol;
+diff --git a/src/libsm64.h b/src/libsm64.h
+index 1f6c5e4..45f4129 100644
+--- a/src/libsm64.h
++++ b/src/libsm64.h
+@@ -201,6 +201,7 @@ extern SM64_LIB_FN uint16_t sm64_get_current_background_music();
+ extern SM64_LIB_FN void sm64_play_sound(int32_t soundBits, float *pos);
+ extern SM64_LIB_FN void sm64_play_sound_global(int32_t soundBits);
+ extern SM64_LIB_FN void sm64_set_sound_volume(float vol);
++extern SM64_LIB_FN void sm64_set_music_volume(float vol);
+ 
+ #ifdef __cplusplus
+ }

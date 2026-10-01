@@ -86,6 +86,7 @@ public final class AutoTest {
         }
         if ("controls".equals(SCENARIO)) { controlsCheck(mc); return; }
         if ("gamepad".equals(SCENARIO)) { gamepadCheck(mc, m); return; }
+        if ("music".equals(SCENARIO)) { musicCheck(mc); return; }
         if ("tech".equals(SCENARIO)) techCheck(mc, m);
         if ("flips".equals(SCENARIO)) flipsCheck(mc, m);
         if (t == ("show".equals(SCENARIO) ? 520 : "tech".equals(SCENARIO) ? 360 : "flips".equals(SCENARIO) ? 420 : 470)) {
@@ -104,7 +105,7 @@ public final class AutoTest {
         java.util.Arrays.fill(o, 0);
         if (t < 0) return;
         if ("flips".equals(SCENARIO)) { flipsInputs(o); return; }
-        if ("gamepad".equals(SCENARIO) || "controls".equals(SCENARIO)) return; // driven by the (virtual) gamepad / UI
+        if ("gamepad".equals(SCENARIO) || "controls".equals(SCENARIO) || "music".equals(SCENARIO)) return; // driven by the (virtual) gamepad / UI
         if ("tech".equals(SCENARIO)) {
             MarioController m = MarioController.INSTANCE;
             double z = m.renderZNow();
@@ -163,6 +164,55 @@ public final class AutoTest {
             lastAction = m.action;
         }
         if (t == shotAt) shot(mc, "mario_tech_" + (wallKicked ? "wallkick" : "longjump"));
+    }
+
+    // --- "music": the SM64 soundtrack follows where Mario is ---
+    private static final String[] MUSIC_PHASES = {"grass", "cave", "water", "end", "volume"};
+    private static final int[] MUSIC_EXPECT = {MarioMusic.SEQ_GRASS, MarioMusic.SEQ_UNDERGROUND, MarioMusic.SEQ_WATER, MarioMusic.SEQ_KOOPA_ROAD};
+    private static final StringBuilder musicResult = new StringBuilder();
+    private static double musicVolBefore;
+
+    private static void cmd(MinecraftClient mc, String c) {
+        var srv = mc.getServer();
+        java.util.UUID id = mc.player.getUuid();
+        srv.execute(() -> srv.getCommandManager().executeWithPrefix(
+                srv.getPlayerManager().getPlayer(id).getCommandSource().withSilent().withMaxLevel(4), c));
+    }
+
+    private static void musicCheck(MinecraftClient mc) {
+        int phase = t / 180, pt = t % 180;
+        if (phase >= MUSIC_PHASES.length) return;
+        if (pt == 1) {
+            switch (MUSIC_PHASES[phase]) {
+                case "grass" -> MarioAudio.record(mc.runDirectory.toPath().resolve("mario_music_bobomb.wav"), 20);
+                case "cave" -> cmd(mc, "tp @s 23.5 -60 3.5");
+                case "water" -> cmd(mc, "tp @s -6.5 -61 -6.5");
+                case "end" -> cmd(mc, "execute in minecraft:the_end run tp @s 100.5 62 0.5");
+                case "volume" -> { musicVolBefore = MarioAudio.rms;
+                                   mc.options.getSoundVolumeOption(net.minecraft.sound.SoundCategory.MUSIC).setValue(0.0); }
+            }
+        }
+        if (pt == 8 && "end".equals(MUSIC_PHASES[phase]))   // chunk is loaded now: build a landing platform
+            cmd(mc, "execute in minecraft:the_end run fill 95 48 -5 105 48 5 obsidian");
+        if (pt == 175) {
+            String name = MUSIC_PHASES[phase];
+            if (phase < MUSIC_EXPECT.length) {
+                boolean ok = MarioMusic.playing() == MUSIC_EXPECT[phase] && MarioAudio.rms > 0.005;
+                String line = String.format("%s: track=0x%02X (%s) expected 0x%02X rms=%.4f %s", name, MarioMusic.playing(),
+                        MarioMusic.name(MarioMusic.playing()), MUSIC_EXPECT[phase], MarioAudio.rms, ok ? "PASS" : "FAIL");
+                log(mc, "music " + line);
+                musicResult.append(name).append('=').append(ok ? "PASS " : "FAIL ");
+                shot(mc, "mario_music_" + name);
+            } else {
+                boolean ok = MarioAudio.rms < musicVolBefore * 0.2;
+                log(mc, String.format("music volume: rms %.4f -> %.4f with Music slider 0 %s", musicVolBefore, MarioAudio.rms, ok ? "PASS" : "FAIL"));
+                musicResult.append("music_slider=").append(ok ? "PASS" : "FAIL");
+                mc.options.getSoundVolumeOption(net.minecraft.sound.SoundCategory.MUSIC).setValue(1.0);
+                log(mc, "RESULT " + musicResult);
+                log(mc, "DONE");
+                mc.scheduleStop();
+            }
+        }
     }
 
     // --- "gamepad": real-hardware detection, then a virtual Xbox pad drives Mario ---

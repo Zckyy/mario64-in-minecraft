@@ -15,6 +15,7 @@ public class Mario64Client implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             MarioControls.tick(mc);
             MarioGamepad.menuButtons(mc);
+            MarioMusic.tick(mc);
             MarioController.INSTANCE.clientTick(mc);
             AutoTest.clientTick(mc);
         });

@@ -71,6 +71,30 @@ camera speed and invert Y. They're saved in `config/mario64/mario64.json`, and t
 detected. Keyboard and mouse keep working alongside the pad. *GameSir G7 SE tip:* its two back paddles are remapped in
 the controller itself. Mapping one to **LT** puts Z (long jump, backflip, ground pound) under a finger.
 
+## Super Mario 64 music
+The original soundtrack, played live by SM64's own sequencer from **your ROM's** sequences and soundbanks (no recordings
+are shipped). In **Auto** the track follows where you are, and the track name pops up above the hotbar when it changes:
+
+| Where | Track |
+|---|---|
+| Grassland, daytime | Bob-omb Battlefield |
+| Swimming / underwater | Dire, Dire Docks |
+| Deep underground (no sky, at least 8 blocks below the surface) | Cave Dungeon (Hazy Maze Cave) |
+| Covered but shallow (houses, overhangs) | Inside the Castle Walls |
+| Snowy biomes | Snow Mountain |
+| Deserts, the Nether | Lethal Lava Land |
+| Night | Haunted House (Big Boo's Haunt) |
+| The End | Koopa's Road |
+| Ender Dragon / Wither / Warden nearby | Koopa's Theme (Bowser battle) |
+
+Under **Options → Controls → Mario 64 Settings…**, *Music* can be **While Mario** (default), **Always** or **Off**, and
+*Track* can be **Auto** or any of 20 tracks (Slider, Ultimate Koopa, Metallic Mario, Staff Roll, File Select…).
+Minecraft's own music pauses while SM64 music plays. SM64 music follows Minecraft's **Music** slider, and Mario's voice
+and SFX follow **Players**.
+
+Separate music volume needs the small libsm64 patch in `patches/libsm64-music-volume.patch` (adds `sm64_set_music_volume`).
+Apply it before `make`.
+
 ## Install (Windows)
 1. Install Fabric Loader 0.16.10 for 1.21.4 and Fabric API 0.119.4+1.21.4.
 2. Put `mario64mc-0.1.0.jar` in `mods/`.
@@ -78,13 +102,15 @@ the controller itself. Mapping one to **LT** puts Z (long jump, backflip, ground
 4. In a single-player world, press **M**.
 
 ## Build
-- `sm64.dll`: clone libsm64, then run `python import-mario-geo.py` (it fetches Mario's geo/model sources from n64decomp/sm64), then `make lib CC=gcc` with w64devkit/MSYS2 gcc.
+- `sm64.dll`: clone libsm64, run `git apply patches/libsm64-music-volume.patch`, then run `python import-mario-geo.py` (it fetches Mario's geo/model sources from n64decomp/sm64), then `make lib CC=gcc` with w64devkit/MSYS2 gcc.
 - Mod: `cd mod && ./gradlew build` (JDK 21) produces `mod/build/libs/mario64mc-0.1.0.jar`.
 - Automated in-game tests: `./gradlew runAutotest` (hills: moves), `runCourse`, `runShow` (flat course), `runTech`
   (long jump and wall kick), `runFlips` (backflip, side flip, slide kick) `runControls` (controls card, rebinding
   Mario's A to K while vanilla Jump stays on Space, and screenshots of the Key Binds section) and `runGamepad` (real pad
   detection, deadzone maths, and a virtual Xbox pad checking that a half tilt walks and a full tilt runs, plus the
-  right-stick camera, A/LT/X, and screenshots of the settings screens). The last two end with a
+  right-stick camera, A/LT/X, and screenshots of the settings screens) and `runMusic` (grass, cave, water and End
+  each start the right SM64 track with audible output, the Music slider silences it, and 20 s of output is recorded to
+  `mod/run/mario_music_bobomb.wav`). The last two end with a
   `RESULT …=PASS|FAIL` line. Each opens a
   lab world, becomes Mario, drives scripted controller input, logs `MARIO64TEST` state lines (SM64 action IDs,
   positions, mob HP) and saves screenshots to `mod/run/screenshots`.

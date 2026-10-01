@@ -132,6 +132,15 @@ public final class MarioController {
         }
     }
 
+    /** Start libsm64 + its audio engine without becoming Mario (music "always"). Quiet if files are missing. */
+    public boolean ensureAudio(MinecraftClient mc) {
+        if (initialized) return true;
+        if (initFailed) return false;
+        Path dir = configDir();
+        if (!Files.exists(dir.resolve("sm64.dll")) || !Files.exists(dir.resolve("baserom.us.z64"))) return false;
+        return init(mc);
+    }
+
     public void toggle() {
         if (active) deactivate(); else activate();
     }
@@ -161,7 +170,6 @@ public final class MarioController {
         mc.options.setPerspective(Perspective.THIRD_PERSON_BACK);
         active = true;
         marioPlayer = player.getUuid();
-        MarioAudio.setActive(true);
         if (!AutoTest.enabled()) say(mc, Formatting.GOLD, "It's-a me, Mario!  [" + MarioControls.moveNames() + "] move  [" + MarioControls.aName()
                 + "] A  [" + MarioControls.bName() + "] B  [" + MarioControls.zName() + "] Z  ["
                 + MarioControls.showControls.getBoundKeyLocalizedText().getString() + "] controls");
@@ -173,7 +181,6 @@ public final class MarioController {
         marioId = -1;
         active = false;
         marioPlayer = null;
-        MarioAudio.setActive(false);
         if (savedPerspective != null) mc.options.setPerspective(savedPerspective);
         if (mc.player != null) mc.player.setVelocity(0, 0, 0);
     }

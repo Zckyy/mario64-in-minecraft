@@ -58,4 +58,9 @@ public final class LibSM64 {
     public static native void sm64_mario_take_damage(int marioId, int damage, int subtype, float x, float y, float z);
 
     public static native void sm64_set_sound_volume(float vol);
+    /** mario64mc patch (patches/libsm64-music-volume.patch): music-only volume. */
+    public static native void sm64_set_music_volume(float vol);
+    public static native void sm64_play_music(byte player, short seqArgs, short fadeTimer);
+    public static native void sm64_stop_background_music(short seqId);
+    public static native short sm64_get_current_background_music();
 }

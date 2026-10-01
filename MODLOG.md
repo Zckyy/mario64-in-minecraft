@@ -74,3 +74,10 @@ blocks, rendered with Mario's real model and textures from the user's ROM. Plus 
     stick (it made a half tilt look like a run). Every scenario needs an explicit branch.
 15. After a ground-pound landing Mario stays in 0x0C00023E (recovery), which ignores B for about 20 frames. Press buttons
     reactively on ACT_IDLE.
+- Music: SM64 sequences via sm64_play_music(0, (4<<8)|seq, 0) on the audio thread (command queue). The libsm64 patch
+  limits gTrackVolume to sequence players 0/1 (2 = SFX) and exports sm64_set_music_volume, because gAudioVolume
+  (sm64_set_sound_volume) only scales SFX. runMusic: grass 0x03, cave 0x0C, water 0x05, End 0x11 PASS (rms 0.05-0.09),
+  Music slider 0 -> rms 0.0000 PASS. Recorded WAV: mean -18.3 dB, peak -0.5 dB. The user confirmed hearing it.
+16. A superflat world's sea level is -63, so "below sea level" is a bad cave test. Use the heightmap depth (>= 8 blocks, no sky light).
+17. A /fill in another dimension queued in the same tick as the /tp there fails (chunk not loaded). Build after arriving.
+18. The JNA direct mapping needs every bound symbol, so the mod requires the patched DLL (old sm64.dll -> UnsatisfiedLinkError).
