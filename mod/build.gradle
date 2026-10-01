@@ -45,3 +45,17 @@ loom {
         }
     }
 }
+
+loom {
+    runs {
+        show {
+            inherit client
+            name 'Mario Showcase'
+            vmArg '-Dmario64.autotest=show'
+            vmArg '-Dmario64.world=MarioShow'
+            vmArg '-Dmario64.preset=flat'
+            vmArg '-Dmario64.setup=tp @s 0.5 -60 0.5 0 0;fill -1 -60 25 1 -60 29 stone;fill -1 -59 26 1 -59 29 stone;fill -1 -58 27 1 -58 29 stone;setblock 0 -60 24 oak_stairs[facing=south];setblock 0 -59 25 oak_stairs[facing=south];setblock 0 -58 26 oak_stairs[facing=south];summon pig 0 -60 33 {NoAI:1b};fill -3 -63 37 3 -61 46 water;summon pig 2 -60 10 {NoAI:1b}'
+            programArgs '--width', '1280', '--height', '720'
+        }
+    }
+}

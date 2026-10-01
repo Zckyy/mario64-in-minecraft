@@ -25,3 +25,27 @@ blocks, rendered with Mario's real model and textures from the user's ROM. Plus 
 
 ## Log
 - 2026-10-01: recon done, user chose 1.21.4 and approved the installs.
+
+- Built sm64.dll with w64devkit gcc 2.10 (deps: KERNEL32 and msvcrt only). Mario geo/model fetched from n64decomp/sm64@06ec56d.
+- Fabric 1.21.4 mod: JNA direct mapping (MC already ships JNA 5.15). 30 Hz SM64 tick from a GameRenderer.renderWorld HEAD
+  mixin, with the player position set to interpolated Mario before the camera is placed.
+- Install: launcher profile "Mario 64 (Fabric 1.21.4)", gameDir `.minecraft\mario64` (isolated from the user's other profiles).
+  Backup of launcher_profiles.json is in backups/. To undo: delete that profile entry and the mario64 folder.
+
+## Gotchas (numbered)
+1. libsm64 audio debug_print floods the log (MBs per second). Filter the callback.
+2. Untextured tris have uv (1,1). With GL_REPEAT that samples texel (0,0) and makes black speckles. Skip them in the decal pass.
+3. SM64 shading is mix(color, tex, tex.a). Draw a colour pass, then a translucent texture pass nudged 0.35 units along the normals.
+4. SM64 "no floor" = wall. Always give every column a floor (scan 64 blocks down, else a fallback floor).
+5. The integrated server checks moves against Steve's 0.6x1.8 box and "moved wrongly" snaps Mario back on ramps. Set
+   player.noClip=true for the Mario player at ServerPlayNetworkHandler.onPlayerMove HEAD.
+6. libsm64 casts angles to int16 (rad/pi*32768). Wrap MC yaw to [-180,180) first.
+7. Stick convention: stickY=-1 is forward and camLook = Mario - camera. Coordinates map x->x, z->z (both right-handed, y up).
+8. Hiding chat (chatVisibility:2) also blocks /commands. Autotest runs setup through the server command manager silently.
+9. sm64_surface_find_ceil segfaults with a NULL out-pointer.
+
+## Verification (MARIO64TEST logs)
+- hills: walk 0x04000440, jump/double 0x03000880/881, ledge grab/climb 0x0800034B/0x0000054F, punch 0x00800380,
+  ground pound 0x008008A9 -> land 0x0080023C.
+- flat show: triple jump 0x01000882 (+6 blocks), stairs ramp, stomp pig 10->5 HP + bounce, dive 0x0188088A, water plunge
+  0x300022E2, swimming 0x300024D0/D1/E1, swim mesh 788 tris.

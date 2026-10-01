@@ -37,7 +37,7 @@ public final class MarioController {
 
     // decomp/include/sm64.h
     static final int MARIO_PUNCHING = 0x00100000, MARIO_KICKING = 0x00200000, MARIO_TRIPPING = 0x00400000;
-    static final int ACT_FLAG_AIR = 1 << 11, ACT_FLAG_SWIMMING = 1 << 13;
+    public static final int ACT_FLAG_AIR = 1 << 11, ACT_FLAG_SWIMMING = 1 << 13;
     static final int ACT_GROUND_POUND_LAND = 0x0080023C, ACT_GROUND_POUND = 0x008008A9, ACT_DIVE = 0x0188088A,
             ACT_DIVE_SLIDE = 0x00880456, ACT_SLIDE_KICK = 0x018008AA, ACT_JUMP_KICK = 0x018008AC,
             ACT_DOUBLE_JUMP = 0x03000881;
@@ -162,7 +162,7 @@ public final class MarioController {
         active = true;
         marioPlayer = player.getUuid();
         MarioAudio.setActive(true);
-        say(mc, Formatting.GOLD, "It's-a me, Mario!  [WASD] move  [Space] A  [Left click] B  [Shift] Z  [M] exit");
+        if (!AutoTest.enabled()) say(mc, Formatting.GOLD, "It's-a me, Mario!  [WASD] move  [Space] A  [Left click] B  [Shift] Z  [M] exit");
     }
 
     public void deactivate() {

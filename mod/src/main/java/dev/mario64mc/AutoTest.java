@@ -48,7 +48,13 @@ public final class AutoTest {
         if (inWorldTicks == 60) {
             mc.player.networkHandler.sendChatCommand("time set noon");
             String setup = System.getProperty("mario64.setup");
-            if (setup != null) for (String cmd : setup.split(";")) mc.player.networkHandler.sendChatCommand(cmd.trim());
+            var srv = mc.getServer();
+            java.util.UUID id = mc.player.getUuid();
+            if (setup != null && srv != null) srv.execute(() -> {
+                var sp = srv.getPlayerManager().getPlayer(id);
+                for (String cmd : setup.split(";"))
+                    srv.getCommandManager().executeWithPrefix(sp.getCommandSource().withSilent().withMaxLevel(4), cmd.trim());
+            });
         }
         if (inWorldTicks == 120) {
             mc.player.setPitch(22);
@@ -70,13 +76,13 @@ public final class AutoTest {
             var mobs = mc.world.getEntitiesByClass(net.minecraft.entity.LivingEntity.class, mc.player.getBoundingBox().expand(12), e -> e != mc.player);
             for (var e : mobs) log(mc, String.format("  mob %s hp=%.1f at (%.1f,%.1f,%.1f)", e.getType().getUntranslatedName(), e.getHealth(), e.getX(), e.getY(), e.getZ()));
         }
-        int[] shots = "course".equals(SCENARIO) ? new int[]{40, 70, 95, 120, 150, 180, 210, 250, 290, 330} : new int[]{40, 100, 132, 175, 228, 262, 290, 352, 362, 420};
+        int[] shots = "show".equals(SCENARIO) ? new int[]{90, 130, 170, 230, 280, 330, 400} : "course".equals(SCENARIO) ? new int[]{40, 70, 95, 120, 150, 180, 210, 250, 290, 330} : new int[]{40, 100, 132, 175, 228, 262, 290, 352, 362, 420};
         for (int s : shots) if (t == s) shot(mc, "mario_" + SCENARIO + "_t" + t);
         if (t == 80) {
             log(mc, "origin " + m.ox + "," + m.oy + "," + m.oz);
             for (String line : m.dumpNear(150)) log(mc, "  surf " + line);
         }
-        if (t == 470) {
+        if (t == ("show".equals(SCENARIO) ? 520 : 470)) {
             log(mc, "DONE");
             mc.scheduleStop();
         }
@@ -86,6 +92,16 @@ public final class AutoTest {
     static void fillInputs(float[] o) {
         java.util.Arrays.fill(o, 0);
         if (t < 0) return;
+        if ("show".equals(SCENARIO)) {
+            MarioController m = MarioController.INSTANCE;
+            boolean landing = m.action == 0x04000470 || m.action == 0x04000472; // ACT_JUMP_LAND, ACT_DOUBLE_JUMP_LAND
+            if (t >= 60 && t < 470) o[1] = -1;
+            if (in(75, 78) || (landing && t < 220)) o[2] = 1;             // single -> double -> triple jump chain
+            boolean air = (m.action & MarioController.ACT_FLAG_AIR) != 0;
+            if (air && m.renderZNow() > 31 && m.renderZNow() < 36 && t % 6 < 3) o[3] = 1; // dive off the platform at the pig
+            if (m.renderYNow() < -60.5 && t % 14 < 4) o[2] = 1;          // swim strokes once in the pool
+            return;
+        }
         if ("course".equals(SCENARIO)) {
             if (t >= 45 && t < 330) o[1] = -1;                    // keep running/swimming forward
             if (t >= 95 && t < 200 && t % 20 < 3) o[3] = 1;       // punch whatever is in front
