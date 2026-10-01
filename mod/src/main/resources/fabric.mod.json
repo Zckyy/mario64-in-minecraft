@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "mario64",
+  "version": "${version}",
+  "name": "Mario 64 in Minecraft",
+  "description": "Play as the real Super Mario 64 Mario (n64decomp/sm64 via libsm64) in Minecraft. Requires your own SM64 US ROM.",
+  "authors": ["Zckyy", "Claude (AI)"],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": { "client": ["dev.mario64mc.Mario64Client"] },
+  "mixins": ["mario64.mixins.json"],
+  "depends": { "fabricloader": ">=0.16.10", "minecraft": "~1.21.4", "fabric-api": "*", "java": ">=21" }
+}
